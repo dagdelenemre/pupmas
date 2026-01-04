@@ -49,6 +49,18 @@ config/api_keys.yaml
 .DS_Store
 Thumbs.db
 
+# Internal documentation (not for public)
+DELIVERY.md
+UPGRADE_COMPLETE.md
+SCANNER_UPGRADE.md
+COMPLETE_SUMMARY.md
+READY.md
+COMMANDS.sh
+reference.py
+examples.py
+demo.py
+INDEX.md
+
 # Temporary files
 *.tmp
 *.bak

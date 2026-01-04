@@ -94,7 +94,7 @@ PUPMAS (Puppeteer Master) is a comprehensive cybersecurity operations and intell
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/pupmas.git
+git clone https://github.com/dagdelenemre/pupmas.git
 cd pupmas
 
 # Install dependencies
