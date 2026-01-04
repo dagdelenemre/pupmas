@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
-set -e
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-# Eğer venv varsa aktive et
+set -euo pipefail
+
+# Resolve the real path (handles symlinks in /usr/local/bin)
+SCRIPT_PATH=$(readlink -f "${BASH_SOURCE[0]}")
+SCRIPT_DIR=$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)
+
+# Activate venv if it exists
 if [ -d "$SCRIPT_DIR/venv" ]; then
+  # shellcheck disable=SC1091
   source "$SCRIPT_DIR/venv/bin/activate"
 fi
+
 exec python3 "$SCRIPT_DIR/pupmas.py" "$@"
