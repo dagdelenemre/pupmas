@@ -158,6 +158,11 @@ class AutomatedPipeline:
                 print("\n  Subdomains Found:")
                 for subdomain in self.result.recon_results.subdomain[:10]:
                     print(f"    {subdomain}")
+            if self.result.recon_results.subdomain_ports:
+                print("\n  Non-CDN Subdomain Ports:")
+                for subdomain, ports in self.result.recon_results.subdomain_ports.items():
+                    port_list = ", ".join(f"{p.port}/{p.service}" for p in ports) if ports else "none"
+                    print(f"    {subdomain}: {port_list}")
         else:
             print_warning("[!] Target not reachable")
     

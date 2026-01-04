@@ -16,6 +16,7 @@ from pathlib import Path
 import ipaddress
 import dns.resolver
 import dns.rdatatype
+import ssl
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 @dataclass
@@ -40,6 +41,7 @@ class HostInfo:
     services: Dict[str, str] = field(default_factory=dict)
     dns_records: Dict[str, List[str]] = field(default_factory=dict)
     subdomain: List[str] = field(default_factory=list)
+    subdomain_ports: Dict[str, List[PortInfo]] = field(default_factory=dict)
     http_title: str = ""
     is_vulnerable: bool = False
     scan_timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
@@ -53,7 +55,9 @@ class ReconnaissanceEngine:
         445: "SMB", 3306: "MySQL", 3389: "RDP", 5432: "PostgreSQL",
         5984: "CouchDB", 6379: "Redis", 8080: "HTTP-Alt", 8443: "HTTPS-Alt",
         9200: "Elasticsearch", 27017: "MongoDB", 3000: "Node.js",
-        465: "SMTPS", 587: "SMTP-Submission", 993: "IMAPS", 995: "POP3S"
+        465: "SMTPS", 587: "SMTP-Submission", 993: "IMAPS", 995: "POP3S",
+        2082: "cPanel", 2083: "cPanel-SSL", 2086: "WHM", 2087: "WHM-SSL",
+        2095: "Webmail", 2096: "Webmail-SSL"
     }
     
     def __init__(self):
@@ -127,11 +131,13 @@ class ReconnaissanceEngine:
         """Grab service banner"""
         try:
             # Try HTTP GET/HEAD request for web ports - get Server header
-            if port in [80, 443, 8080, 8443, 8000, 8888]:
+            http_like_ports = {80, 443, 8080, 8443, 8000, 8888, 2082, 2083, 2086, 2087, 2095, 2096}
+            https_ports = {443, 8443, 2083, 2087, 2096}
+            if port in http_like_ports:
                 import requests
                 import urllib3
                 urllib3.disable_warnings()
-                protocol = "https" if port in [443, 8443] else "http"
+                protocol = "https" if port in https_ports else "http"
                 try:
                     # Direct IP connection, use domain in Host header
                     response = requests.get(
@@ -152,6 +158,31 @@ class ReconnaissanceEngine:
                     if banner_parts:
                         return " | ".join(banner_parts)
                 except Exception as e:
+                    pass
+            # TLS-only banners (mail/secure ports)
+            tls_banner_ports = {465, 993, 995}
+            if port in tls_banner_ports:
+                try:
+                    context = ssl.create_default_context()
+                    with socket.create_connection((host, port), timeout=timeout) as sock:
+                        with context.wrap_socket(sock, server_hostname=host) as ssock:
+                            ssock.settimeout(timeout)
+                            try:
+                                data = ssock.recv(2048).decode('utf-8', errors='ignore')
+                                if data:
+                                    first_line = data.split('\n')[0].strip()
+                                    if first_line:
+                                        return first_line[:200]
+                            except socket.timeout:
+                                pass
+                            try:
+                                ssock.sendall(b"\r\n")
+                                data = ssock.recv(2048).decode('utf-8', errors='ignore')
+                                if data:
+                                    return data.split('\n')[0][:200]
+                            except Exception:
+                                pass
+                except Exception:
                     pass
             
             # Try socket banner grab
@@ -176,6 +207,19 @@ class ReconnaissanceEngine:
             return banner.split('\n')[0][:200] if banner else ""
         except Exception:
             return ""
+
+    def _is_cloudflare_ip(self, ip: str) -> bool:
+        """Check if IP belongs to Cloudflare ranges"""
+        cf_ranges = [
+            '173.245.48.', '103.21.244.', '103.22.200.', '103.31.4.',
+            '141.101.64.', '108.162.192.', '190.93.240.', '188.114.96.',
+            '197.234.240.', '198.41.128.', '162.158.', '104.16.',
+            '172.64.', '131.0.72.', '104.17.', '104.18.', '104.19.',
+            '104.20.', '104.21.', '104.22.', '104.23.', '104.24.',
+            '104.25.', '104.26.', '104.27.', '104.28.', '104.29.',
+            '104.30.', '104.31.'
+        ]
+        return any(ip.startswith(prefix) for prefix in cf_ranges)
     
     def detect_service_version(self, host: str, port: int, banner: str) -> Tuple[str, List[str]]:
         """Detect service version and potential CVEs"""
@@ -327,6 +371,7 @@ class ReconnaissanceEngine:
         host_info.alive = True
         
         # Port scanning
+        ports_to_scan: List[int] = []
         if profile in ["active", "aggressive"]:
             print_info(f"[*] Scanning ports on {ip}...")
             ports = list(self.COMMON_PORTS.keys())
@@ -339,6 +384,7 @@ class ReconnaissanceEngine:
                         2049, 2082, 2083, 2086, 2087, 2095, 2096, 2222, 3128, 4443, 4444, 5001, 5222, 5269,
                         5357, 5432, 5500, 5800, 5801, 5900, 6000, 6001, 6379, 6666, 7000, 7001, 7777, 8009,
                         8089, 8090, 8180, 8888, 9000, 9001, 9080, 9090, 9100, 9999, 10000, 10443, 11211, 27017]
+            ports_to_scan = ports
             
             host_info.open_ports = self.scan_ports(ip, ports)
             print_success(f"[+] Found {len(host_info.open_ports)} open ports")
@@ -368,6 +414,8 @@ class ReconnaissanceEngine:
             print_info("[*] Enumerating subdomains...")
             host_info.subdomain = self.subdomain_enumeration(target)
             print_success(f"[+] Found {len(host_info.subdomain)} subdomains")
+            if host_info.subdomain:
+                host_info.subdomain_ports = self._scan_subdomain_ports(host_info.subdomain, ports_to_scan or list(self.COMMON_PORTS.keys()))
         
         # Vulnerability check
         if host_info.open_ports:
@@ -377,6 +425,25 @@ class ReconnaissanceEngine:
                 print_success(f"[+] Found {cve_count} potential CVEs")
         
         return host_info
+
+    def _scan_subdomain_ports(self, subdomains: List[str], ports: List[int]) -> Dict[str, List[PortInfo]]:
+        """Scan ports for subdomains that are not on Cloudflare"""
+        from utils.helpers import print_info, print_success
+        results: Dict[str, List[PortInfo]] = {}
+        for subdomain_entry in subdomains:
+            if '(' in subdomain_entry and ')' in subdomain_entry:
+                subdomain = subdomain_entry.split('(')[0].strip()
+                ip = subdomain_entry.split('(')[1].rstrip(')')
+            else:
+                subdomain = subdomain_entry.strip()
+                ip = None
+            if not ip or self._is_cloudflare_ip(ip):
+                continue
+            print_info(f"[*] Scanning non-CDN subdomain {subdomain} ({ip})...")
+            sub_ports = self.scan_ports(ip, ports)
+            results[subdomain_entry] = sub_ports
+            print_success(f"[+] {subdomain}: {len(sub_ports)} open ports (non-CDN)")
+        return results
     
     def export_results(self, host_info: HostInfo, output_file: str = "recon_results.json"):
         """Export scan results"""
@@ -391,7 +458,11 @@ class ReconnaissanceEngine:
             "open_ports": [asdict(p) for p in host_info.open_ports],
             "services": host_info.services,
             "dns_records": host_info.dns_records,
-            "subdomains": host_info.subdomain
+            "subdomains": host_info.subdomain,
+            "subdomain_ports": {
+                sub: [asdict(p) for p in ports]
+                for sub, ports in host_info.subdomain_ports.items()
+            }
         }
         
         with open(output_file, 'w') as f:
