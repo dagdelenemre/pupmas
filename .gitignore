@@ -41,6 +41,9 @@ data/timelines/*.json
 *.sqlite
 *.sqlite3
 
+# Packages
+*.deb
+
 # API Keys
 .env
 config/api_keys.yaml
