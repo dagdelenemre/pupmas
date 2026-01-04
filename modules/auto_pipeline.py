@@ -171,7 +171,13 @@ class AutomatedPipeline:
         
         for port_info in http_ports:
             protocol = "https" if port_info.port in [443, 8443] else "http"
-            target_url = f"{protocol}://{self.result.recon_results.ip}:{port_info.port}"
+            # Use domain name instead of IP for proper testing
+            target_host = self.config.target if not self.config.target.replace('.','').isdigit() else self.result.recon_results.ip
+            # Don't show port for standard ports
+            if (protocol == "http" and port_info.port == 80) or (protocol == "https" and port_info.port == 443):
+                target_url = f"{protocol}://{target_host}"
+            else:
+                target_url = f"{protocol}://{target_host}:{port_info.port}"
             
             print_info(f"Testing {target_url}...")
             

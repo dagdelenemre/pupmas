@@ -81,7 +81,7 @@ class ReconnaissanceEngine:
         except socket.gaierror:
             return None
     
-    def scan_port(self, host: str, port: int, timeout: float = 2.0) -> Tuple[int, bool]:
+    def scan_port(self, host: str, port: int, timeout: float = 0.5) -> Tuple[int, bool]:
         """Scan single port"""
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -92,14 +92,14 @@ class ReconnaissanceEngine:
         except Exception:
             return port, False
     
-    def scan_ports(self, host: str, ports: List[int] = None, timeout: float = 2.0) -> List[PortInfo]:
+    def scan_ports(self, host: str, ports: List[int] = None, timeout: float = 0.5) -> List[PortInfo]:
         """Scan multiple ports in parallel"""
         if ports is None:
             ports = list(self.COMMON_PORTS.keys())
         
         open_ports = []
         
-        with ThreadPoolExecutor(max_workers=20) as executor:
+        with ThreadPoolExecutor(max_workers=100) as executor:
             futures = {
                 executor.submit(self.scan_port, host, port, timeout): port 
                 for port in ports
@@ -287,7 +287,14 @@ class ReconnaissanceEngine:
             print_info(f"[*] Scanning ports on {ip}...")
             ports = list(self.COMMON_PORTS.keys())
             if profile == "aggressive":
-                ports = list(range(1, 1001))  # Top 1000 ports
+                # Top 100 most common ports for speed
+                ports = [21, 22, 23, 25, 53, 80, 110, 111, 135, 139, 143, 443, 445, 993, 995, 1723, 3306, 3389, 5900, 8080,
+                        20, 69, 161, 162, 389, 636, 1433, 1434, 5432, 5984, 6379, 8443, 9200, 27017,
+                        137, 138, 548, 8888, 8000, 5000, 3000, 9090, 9999, 8008, 81, 82, 83, 8081, 8082,
+                        123, 179, 445, 500, 514, 515, 587, 631, 873, 902, 1080, 1194, 1352, 1433, 1521,
+                        2049, 2082, 2083, 2086, 2087, 2095, 2096, 2222, 3128, 4443, 4444, 5001, 5222, 5269,
+                        5357, 5432, 5500, 5800, 5801, 5900, 6000, 6001, 6379, 6666, 7000, 7001, 7777, 8009,
+                        8089, 8090, 8180, 8888, 9000, 9001, 9080, 9090, 9100, 9999, 10000, 10443, 11211, 27017]
             
             host_info.open_ports = self.scan_ports(ip, ports)
             print_success(f"[+] Found {len(host_info.open_ports)} open ports")
