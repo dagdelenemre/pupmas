@@ -292,23 +292,63 @@ class AutomatedPipeline:
         # Test real IP if Cloudflare bypassed
         if self.result.waf_info and self.result.waf_info.real_ip:
             print_info(f"\n[*] Testing real IP directly: {self.result.waf_info.real_ip}")
+            print_info("[*] Using direct IP connection to bypass Cloudflare...")
             
-            for port in [80, 443, 8080, 8443]:
-                protocol = "https" if port in [443, 8443] else "http"
-                if port in [80, 443]:
-                    real_url = f"{protocol}://{self.result.waf_info.real_ip}"
-                else:
-                    real_url = f"{protocol}://{self.result.waf_info.real_ip}:{port}"
+            # Test real IP with Host header manipulation
+            for port in [80, 443]:
+                protocol = "https" if port == 443 else "http"
+                real_url = f"{protocol}://{self.result.waf_info.real_ip}"
                 
                 try:
-                    print_info(f"  Testing {real_url}...")
-                    real_result = self.exploit.full_website_scan(real_url)
-                    if real_result.vulnerabilities:
-                        self.result.vulnerabilities_found += len(real_result.vulnerabilities)
-                        self.result.exploitation_results.vulnerabilities.extend(real_result.vulnerabilities)
-                        print_success(f"[+] Found {len(real_result.vulnerabilities)} additional vulns on real IP!")
+                    print_info(f"  Testing {real_url} (bypassing CDN)...")
+                    # Use IP in URL but set Host header to original domain
+                    import requests
+                    session = requests.Session()
+                    
+                    # Test with Host header set to domain
+                    response = session.get(
+                        real_url,
+                        headers={'Host': self.config.target},
+                        timeout=10,
+                        verify=False,
+                        allow_redirects=False
+                    )
+                    
+                    # Check if we bypassed Cloudflare
+                    if 'cloudflare' not in response.headers.get('Server', '').lower():
+                        print_success(f"[+] Successfully bypassed Cloudflare on port {port}!")
+                        print_info(f"    Real server: {response.headers.get('Server', 'Unknown')}")
+                        
+                        # Now run full scan with Host header
+                        real_result = self.exploit.full_website_scan(real_url, host_header=self.config.target)
+                        if real_result.vulnerabilities:
+                            self.result.vulnerabilities_found += len(real_result.vulnerabilities)
+                            self.result.exploitation_results.vulnerabilities.extend(real_result.vulnerabilities)
+                            print_success(f"[+] Found {len(real_result.vulnerabilities)} additional vulns on real IP!")
+                    else:
+                        print_warning(f"[!] Still hitting Cloudflare on real IP port {port}")
+                        
                 except Exception as e:
                     print_warning(f"[!] Real IP test error: {e}")
+            
+            # Test subdomains on real IP
+            if self.result.recon_results and self.result.recon_results.subdomain:
+                print_info("\n[*] Testing subdomains on real IP...")
+                for subdomain_info in self.result.recon_results.subdomain:
+                    subdomain = subdomain_info.split('(')[0].strip()
+                    subdomain_ip = subdomain_info.split('(')[1].rstrip(')') if '(' in subdomain_info else None
+                    
+                    # Only test if subdomain is on real IP
+                    if subdomain_ip == self.result.waf_info.real_ip:
+                        print_info(f"  Testing {subdomain} (on real IP)...")
+                        try:
+                            sub_result = self.exploit.full_website_scan(f"http://{subdomain}")
+                            if sub_result.vulnerabilities:
+                                self.result.vulnerabilities_found += len(sub_result.vulnerabilities)
+                                self.result.exploitation_results.vulnerabilities.extend(sub_result.vulnerabilities)
+                                print_success(f"[+] Found {len(sub_result.vulnerabilities)} vulns on {subdomain}!")
+                        except Exception as e:
+                            pass
     
     def _phase_cve_analysis(self):
         """Phase 3: CVE and vulnerability analysis"""
