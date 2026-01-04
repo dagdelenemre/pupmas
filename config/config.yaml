@@ -1,0 +1,79 @@
+# PUPMAS Configuration File
+
+# General Settings
+app:
+  name: "PUPMAS"
+  version: "1.0.0"
+  debug: false
+  log_level: "INFO"
+
+# Database Configuration
+database:
+  path: "data/pupmas.db"
+  backup_enabled: true
+  backup_interval_days: 7
+
+# API Keys (Optional - set via environment variables for security)
+api_keys:
+  nvd_api_key: ""  # National Vulnerability Database
+  shodan_api_key: ""  # Shodan
+  virustotal_api_key: ""  # VirusTotal
+  
+# MITRE ATT&CK Settings
+mitre:
+  update_interval_days: 30
+  auto_update: false
+  version: "14.1"
+
+# CVE Settings
+cve:
+  cache_expiry_days: 7
+  auto_update: false
+  default_severity_filter: "LOW"
+
+# SIEM Settings
+siem:
+  default_log_format: "json"
+  buffer_size: 10000
+  correlation_enabled: true
+  alert_threshold: 5
+
+# Timeline Settings
+timeline:
+  auto_save: true
+  max_events_per_timeline: 10000
+
+# Reconnaissance Settings
+reconnaissance:
+  default_profile: "passive"
+  timeout_seconds: 30
+  max_threads: 10
+  
+# Exploitation Settings
+exploitation:
+  safe_mode: true
+  require_confirmation: true
+  
+# Exfiltration Testing
+exfiltration:
+  test_mode: true
+  max_payload_size_mb: 100
+  
+# Reporting
+reporting:
+  default_format: "html"
+  output_directory: "data/reports"
+  include_screenshots: false
+  
+# Network Settings
+network:
+  proxy: ""
+  timeout: 30
+  retry_attempts: 3
+  user_agent: "PUPMAS/1.0"
+  
+# Security Settings
+security:
+  require_sudo_confirmation: true
+  log_all_actions: true
+  encrypt_sensitive_data: true
