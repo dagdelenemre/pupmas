@@ -154,6 +154,8 @@ Examples:
     # General options
     parser.add_argument('--config', metavar='FILE',
                        help='Custom configuration file')
+    parser.add_argument('--update', action='store_true',
+                       help='Update PUPMAS to latest version')
     parser.add_argument('--verbose', '-v', action='count', default=0,
                        help='Increase verbosity level')
     parser.add_argument('--quiet', '-q', action='store_true',
@@ -168,6 +170,29 @@ Examples:
     
     # Initialize core components
     db_manager = DatabaseManager()
+    
+    # Handle update request
+    if args.update:
+        import subprocess
+        import os
+        print("[+] Updating PUPMAS...")
+        install_dir = Path(__file__).parent.absolute()
+        try:
+            os.chdir(install_dir)
+            subprocess.run(['git', 'pull', 'origin', 'main'], check=True)
+            if (install_dir / 'venv').exists():
+                venv_python = install_dir / 'venv' / 'bin' / 'python'
+                if venv_python.exists():
+                    subprocess.run([str(venv_python), '-m', 'pip', 'install', '-q', '--upgrade', 'pip'], check=True)
+                    subprocess.run([str(venv_python), '-m', 'pip', 'install', '-q', '-r', 'requirements.txt'], check=True)
+            print("[✓] Update complete!")
+            sys.exit(0)
+        except subprocess.CalledProcessError as e:
+            print(f"[!] Update failed: {e}")
+            sys.exit(1)
+        except Exception as e:
+            print(f"[!] Error: {e}")
+            sys.exit(1)
     
     # Display banner unless quiet mode
     if not args.quiet:
