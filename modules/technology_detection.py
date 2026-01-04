@@ -73,8 +73,9 @@ class TechnologyDetector:
                 "website": "https://www.iis.net"
             },
             "LiteSpeed": {
-                "headers": {"Server": r"LiteSpeed"},
-                "category": "Web Server"
+                "headers": {"Server": r"LiteSpeed(?:/(\d+[\d.]*))?"}, 
+                "category": "Web Server",
+                "website": "https://www.litespeedtech.com"
             },
             
             # CDN & WAF

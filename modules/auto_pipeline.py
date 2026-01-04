@@ -288,6 +288,27 @@ class AutomatedPipeline:
             
             except Exception as e:
                 print_warning(f"[!] Exploitation test failed: {e}")
+        
+        # Test real IP if Cloudflare bypassed
+        if self.result.waf_info and self.result.waf_info.real_ip:
+            print_info(f"\n[*] Testing real IP directly: {self.result.waf_info.real_ip}")
+            
+            for port in [80, 443, 8080, 8443]:
+                protocol = "https" if port in [443, 8443] else "http"
+                if port in [80, 443]:
+                    real_url = f"{protocol}://{self.result.waf_info.real_ip}"
+                else:
+                    real_url = f"{protocol}://{self.result.waf_info.real_ip}:{port}"
+                
+                try:
+                    print_info(f"  Testing {real_url}...")
+                    real_result = self.exploit.full_website_scan(real_url)
+                    if real_result.vulnerabilities:
+                        self.result.vulnerabilities_found += len(real_result.vulnerabilities)
+                        self.result.exploitation_results.vulnerabilities.extend(real_result.vulnerabilities)
+                        print_success(f"[+] Found {len(real_result.vulnerabilities)} additional vulns on real IP!")
+                except:
+                    pass
     
     def _phase_cve_analysis(self):
         """Phase 3: CVE and vulnerability analysis"""

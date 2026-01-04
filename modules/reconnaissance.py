@@ -124,9 +124,27 @@ class ReconnaissanceEngine:
     def grab_banner(self, host: str, port: int, timeout: float = 2.0) -> str:
         """Grab service banner"""
         try:
+            # Try HTTP HEAD request for web ports
+            if port in [80, 443, 8080, 8443, 8000, 8888]:
+                import requests
+                protocol = "https" if port in [443, 8443] else "http"
+                try:
+                    response = requests.head(f"{protocol}://{host}:{port}", timeout=3, verify=False)
+                    server = response.headers.get('Server', '')
+                    powered_by = response.headers.get('X-Powered-By', '')
+                    return f"{server} {powered_by}".strip()
+                except:
+                    pass
+            
+            # Try socket banner grab
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(timeout)
             sock.connect((host, port))
+            
+            # Send basic HTTP request for web ports
+            if port in [80, 8080, 8000, 8888]:
+                sock.send(b"HEAD / HTTP/1.0\r\n\r\n")
+            
             banner = sock.recv(1024).decode('utf-8', errors='ignore').strip()
             sock.close()
             return banner[:200]  # Limit banner length
