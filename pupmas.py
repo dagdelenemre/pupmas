@@ -139,7 +139,7 @@ Examples:
     pipeline_group.add_argument('--auto-target', metavar='TARGET',
                                help='Target IP/domain for automated scan')
     pipeline_group.add_argument('--auto-profile', choices=['passive', 'active', 'aggressive'],
-                               default='active', help='Scan aggressiveness level')
+                               default='active', help='Scan profile: passive(stealth), active(balanced), aggressive(full)')
     pipeline_group.add_argument('--auto-type', choices=['pentest', 'ctf', 'redteam', 'blueteam'],
                                default='pentest', help='Operation type for timeline')
     pipeline_group.add_argument('--auto-report', choices=['html', 'json'],
@@ -230,14 +230,14 @@ Examples:
     # AUTOMATED PIPELINE - One command does it all!
     # ============================================
     if args.auto_scan:
-        if not args.target:
-            print("[!] Error: TARGET required for automated scan")
-            print("[*] Example: pupmas --auto-scan 10.10.10.50")
-            print("[*] Example: pupmas --auto-scan example.com -n")
+        if not args.auto_target:
+            print("[!] Error: --auto-target required for automated scan")
+            print("[*] Example: pupmas --auto-scan --auto-target -n 10.10.10.50")
+            print("[*] Example: pupmas --auto-scan --auto-target 10.10.10.50")
             sys.exit(1)
         
         config = PipelineConfig(
-            target=args.target,
+            target=args.auto_target,
             operation_type=args.auto_type,
             recon_profile=args.auto_profile,
             enable_exploitation=not args.auto_no_exploit,
