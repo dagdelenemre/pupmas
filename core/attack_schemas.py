@@ -23,6 +23,10 @@ class AttackPhase(Enum):
     INSTALLATION = "installation"
     COMMAND_CONTROL = "command_and_control"
     ACTIONS_OBJECTIVES = "actions_on_objectives"
+    CREDENTIAL_ACCESS = "credential_access"
+    PRIVILEGE_ESCALATION = "privilege_escalation"
+    LATERAL_MOVEMENT = "lateral_movement"
+    PERSISTENCE = "persistence"
 
 
 class DetectionRuleType(Enum):
