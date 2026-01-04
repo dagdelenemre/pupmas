@@ -150,7 +150,7 @@ Examples:
                                help='Skip database saving')
     pipeline_group.add_argument('--auto-open', action='store_true',
                                help='Automatically open report in browser when complete')
-    pipeline_group.add_argument('--no-prompt', action='store_true',
+    pipeline_group.add_argument('--no-prompt', '-n', action='store_true',
                                help='Skip interactive prompts (e.g., report opening question)')
     
     # General options
