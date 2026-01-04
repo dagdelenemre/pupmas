@@ -7,10 +7,14 @@ Detect web technologies, versions, and map to CVEs
 import requests
 import re
 import json
+import urllib3
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional
 from urllib.parse import urlparse
 import hashlib
+
+# Disable SSL warnings
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 @dataclass
 class Technology:

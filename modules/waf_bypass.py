@@ -7,8 +7,12 @@ Detect Cloudflare, Akamai, Sucuri and attempt bypass techniques
 import requests
 import time
 import random
+import urllib3
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
+
+# Disable SSL warnings
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 @dataclass
 class WAFInfo:
