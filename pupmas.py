@@ -134,12 +134,16 @@ Examples:
     
     # Automated Pipeline (NEW) - One command to do everything!
     pipeline_group = parser.add_argument_group('Automated Pipeline (NEW - Do Everything!)')
-    pipeline_group.add_argument('--auto-scan', '-s', action='store_true',
+    pipeline_group.add_argument('--auto-scan', '-auS', action='store_true',
                                help='🚀 RUN FULL AUTOMATED SCAN: Recon + Exploit + CVE + Timeline + Report')
-    pipeline_group.add_argument('--auto-target', '-t', metavar='TARGET',
+    pipeline_group.add_argument('--auto-target', '-auTg', metavar='TARGET',
                                help='Target IP/domain for automated scan')
-    pipeline_group.add_argument('--auto-profile', '-m', choices=['passive', 'active', 'aggressive', '1', '2', '3'],
-                               default='active', help='Scan mode: passive/1(stealth), active/2(balanced), aggressive/3(full)')
+    pipeline_group.add_argument('-M1', action='store_const', dest='auto_profile', const='passive',
+                               help='Mode 1: Passive/Stealth scan (20 ports, light)')
+    pipeline_group.add_argument('-M2', action='store_const', dest='auto_profile', const='active',
+                               help='Mode 2: Active/Balanced scan (100 ports, default)')
+    pipeline_group.add_argument('-M3', action='store_const', dest='auto_profile', const='aggressive',
+                               help='Mode 3: Aggressive/Full scan (1000 ports, all tests)')
     pipeline_group.add_argument('--auto-type', choices=['pentest', 'ctf', 'redteam', 'blueteam'],
                                default='pentest', help='Operation type for timeline')
     pipeline_group.add_argument('--auto-report', choices=['html', 'json'],
@@ -152,6 +156,8 @@ Examples:
                                help='Automatically open report in browser when complete')
     pipeline_group.add_argument('--no-prompt', '-n', action='store_true',
                                help='Skip interactive prompts (e.g., report opening question)')
+    # Set default for auto_profile if not set by -M1/-M2/-M3
+    parser.set_defaults(auto_profile='active')
     
     # General options
     parser.add_argument('--config', metavar='FILE',
@@ -231,20 +237,16 @@ Examples:
     # ============================================
     if args.auto_scan:
         if not args.auto_target:
-            print("[!] Error: --auto-target required for automated scan")
-            print("[*] Example: pupmas -s -t 10.10.10.50")
-            print("[*] Example: pupmas -s -t -n 10.10.10.50")
-            print("[*] Example: pupmas -s -t -m 3 10.10.10.50")
+            print("[!] Error: -auTg TARGET required")
+            print("[*] Example: pupmas -auS -auTg 10.10.10.50")
+            print("[*] Example: pupmas -auS -auTg -n 10.10.10.50")
+            print("[*] Example: pupmas -auS -auTg -M3 10.10.10.50")
             sys.exit(1)
-        
-        # Normalize mode values (1,2,3 → passive,active,aggressive)
-        mode_map = {'1': 'passive', '2': 'active', '3': 'aggressive'}
-        profile = mode_map.get(args.auto_profile, args.auto_profile)
         
         config = PipelineConfig(
             target=args.auto_target,
             operation_type=args.auto_type,
-            recon_profile=profile,
+            recon_profile=args.auto_profile,
             enable_exploitation=not args.auto_no_exploit,
             enable_timeline=True,
             enable_siem=True,
