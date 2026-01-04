@@ -342,9 +342,15 @@ class AutomatedPipeline:
                 for subdomain_info in self.result.recon_results.subdomain:
                     subdomain = subdomain_info.split('(')[0].strip()
                     subdomain_ip = subdomain_info.split('(')[1].rstrip(')') if '(' in subdomain_info else None
+                    sub_open_ports = []
+                    if self.result.recon_results.subdomain_ports:
+                        sub_open_ports = self.result.recon_results.subdomain_ports.get(subdomain_info, [])
                     
                     # Only test if subdomain is on real IP
                     if subdomain_ip == self.result.waf_info.real_ip:
+                        if not sub_open_ports:
+                            print_warning(f"[!] Skipping {subdomain} (real IP) — no open ports found in recon")
+                            continue
                         print_info(f"  Testing {subdomain} (on real IP)...")
                         try:
                             sub_result = self.exploit.full_website_scan(f"http://{subdomain}", host_header=subdomain)
@@ -365,9 +371,16 @@ class AutomatedPipeline:
                 else:
                     subdomain = subdomain_info.strip()
                     sub_ip = None
+                sub_open_ports = []
+                if self.result.recon_results.subdomain_ports:
+                    sub_open_ports = self.result.recon_results.subdomain_ports.get(subdomain_info, [])
                 
                 # Skip Cloudflare IP ranges
                 if sub_ip and self.waf_bypass._is_cloudflare_ip(sub_ip):
+                    continue
+                # If recon showed zero open ports on this non-CDN subdomain, skip exploitation to avoid hangs
+                if not sub_open_ports:
+                    print_warning(f"[!] Skipping {subdomain} (non-CDN) — no open ports found in recon")
                     continue
                 
                 # Try HTTP then HTTPS
