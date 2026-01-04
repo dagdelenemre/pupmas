@@ -230,13 +230,14 @@ Examples:
     # AUTOMATED PIPELINE - One command does it all!
     # ============================================
     if args.auto_scan:
-        if not args.auto_target:
-            print("[!] Error: --auto-target required for automated scan")
-            print("[*] Example: python3 pupmas.py --auto-scan --auto-target 10.10.10.5")
+        if not args.target:
+            print("[!] Error: TARGET required for automated scan")
+            print("[*] Example: pupmas --auto-scan 10.10.10.50")
+            print("[*] Example: pupmas --auto-scan example.com -n")
             sys.exit(1)
         
         config = PipelineConfig(
-            target=args.auto_target,
+            target=args.target,
             operation_type=args.auto_type,
             recon_profile=args.auto_profile,
             enable_exploitation=not args.auto_no_exploit,
