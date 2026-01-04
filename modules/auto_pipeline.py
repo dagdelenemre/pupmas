@@ -307,8 +307,8 @@ class AutomatedPipeline:
                         self.result.vulnerabilities_found += len(real_result.vulnerabilities)
                         self.result.exploitation_results.vulnerabilities.extend(real_result.vulnerabilities)
                         print_success(f"[+] Found {len(real_result.vulnerabilities)} additional vulns on real IP!")
-                except:
-                    pass
+                except Exception as e:
+                    print_warning(f"[!] Real IP test error: {e}")
     
     def _phase_cve_analysis(self):
         """Phase 3: CVE and vulnerability analysis"""

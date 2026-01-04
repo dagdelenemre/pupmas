@@ -8,6 +8,7 @@ import socket
 import subprocess
 import threading
 import json
+import time
 from dataclasses import dataclass, asdict, field
 from datetime import datetime
 from typing import List, Dict, Optional, Tuple
@@ -124,16 +125,32 @@ class ReconnaissanceEngine:
     def grab_banner(self, host: str, port: int, timeout: float = 2.0) -> str:
         """Grab service banner"""
         try:
-            # Try HTTP HEAD request for web ports
+            # Try HTTP GET/HEAD request for web ports - get Server header
             if port in [80, 443, 8080, 8443, 8000, 8888]:
                 import requests
+                import urllib3
+                urllib3.disable_warnings()
                 protocol = "https" if port in [443, 8443] else "http"
                 try:
-                    response = requests.head(f"{protocol}://{host}:{port}", timeout=3, verify=False)
-                    server = response.headers.get('Server', '')
-                    powered_by = response.headers.get('X-Powered-By', '')
-                    return f"{server} {powered_by}".strip()
-                except:
+                    # Direct IP connection, use domain in Host header
+                    response = requests.get(
+                        f"{protocol}://{host}:{port}", 
+                        timeout=5, 
+                        verify=False,
+                        allow_redirects=False
+                    )
+                    server = response.headers.get('Server', '') or response.headers.get('server', '')
+                    powered_by = response.headers.get('X-Powered-By', '') or response.headers.get('x-powered-by', '')
+                    
+                    banner_parts = []
+                    if server:
+                        banner_parts.append(server)
+                    if powered_by:
+                        banner_parts.append(powered_by)
+                    
+                    if banner_parts:
+                        return " | ".join(banner_parts)
+                except Exception as e:
                     pass
             
             # Try socket banner grab
@@ -141,13 +158,21 @@ class ReconnaissanceEngine:
             sock.settimeout(timeout)
             sock.connect((host, port))
             
-            # Send basic HTTP request for web ports
-            if port in [80, 8080, 8000, 8888]:
-                sock.send(b"HEAD / HTTP/1.0\r\n\r\n")
+            # Send HTTP request for web ports
+            if port in [80, 8080, 8000, 8888, 8443, 443]:
+                sock.send(b"GET / HTTP/1.0\r\nConnection: close\r\n\r\n")
+                time.sleep(0.2)
             
-            banner = sock.recv(1024).decode('utf-8', errors='ignore').strip()
+            banner = sock.recv(2048).decode('utf-8', errors='ignore')
             sock.close()
-            return banner[:200]  # Limit banner length
+            
+            # Extract Server header from HTTP response
+            if 'HTTP' in banner:
+                for line in banner.split('\r\n'):
+                    if line.lower().startswith('server:'):
+                        return line.split(':', 1)[1].strip()[:200]
+            
+            return banner.split('\n')[0][:200] if banner else ""
         except Exception:
             return ""
     
