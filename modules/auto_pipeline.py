@@ -309,7 +309,7 @@ class AutomatedPipeline:
                     response = session.get(
                         real_url,
                         headers={'Host': self.config.target},
-                        timeout=10,
+                        timeout=(3, 5),  # 3s connect, 5s read
                         verify=False,
                         allow_redirects=False
                     )
@@ -342,7 +342,7 @@ class AutomatedPipeline:
                     if subdomain_ip == self.result.waf_info.real_ip:
                         print_info(f"  Testing {subdomain} (on real IP)...")
                         try:
-                            sub_result = self.exploit.full_website_scan(f"http://{subdomain}")
+                            sub_result = self.exploit.full_website_scan(f"http://{subdomain}", host_header=subdomain)
                             if sub_result.vulnerabilities:
                                 self.result.vulnerabilities_found += len(sub_result.vulnerabilities)
                                 self.result.exploitation_results.vulnerabilities.extend(sub_result.vulnerabilities)
