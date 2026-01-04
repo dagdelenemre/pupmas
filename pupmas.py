@@ -150,6 +150,8 @@ Examples:
                                help='Skip database saving')
     pipeline_group.add_argument('--auto-open', action='store_true',
                                help='Automatically open report in browser when complete')
+    pipeline_group.add_argument('--no-prompt', action='store_true',
+                               help='Skip interactive prompts (e.g., report opening question)')
     
     # General options
     parser.add_argument('--config', metavar='FILE',
@@ -266,8 +268,8 @@ Examples:
                     print(f"🌐 Opening report in browser...\n")
                 except Exception as e:
                     print(f"⚠ Could not auto-open: {e}\n")
-            # Ask if user wants to open report (only for HTML, and if TTY)
-            elif args.auto_report == 'html' and sys.stdin.isatty():
+            # Ask if user wants to open report (only for HTML, TTY, and no --no-prompt)
+            elif args.auto_report == 'html' and sys.stdin.isatty() and not args.no_prompt:
                 try:
                     response = input("📄 Open report in browser? [Y/n]: ").strip().lower()
                     if response in ['', 'y', 'yes']:
