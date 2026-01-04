@@ -156,6 +156,8 @@ Examples:
                        help='Custom configuration file')
     parser.add_argument('--update', action='store_true',
                        help='Update PUPMAS to latest version')
+    parser.add_argument('--open-report', action='store_true',
+                       help='Open the most recent report in browser')
     parser.add_argument('--verbose', '-v', action='count', default=0,
                        help='Increase verbosity level')
     parser.add_argument('--quiet', '-q', action='store_true',
@@ -170,6 +172,30 @@ Examples:
     
     # Initialize core components
     db_manager = DatabaseManager()
+    
+    # Handle open-report request
+    if args.open_report:
+        import subprocess
+        import platform
+        import glob
+        try:
+            reports_dir = Path(__file__).parent / 'reports'
+            html_reports = sorted(reports_dir.glob('pupmas_report_*.html'), key=lambda p: p.stat().st_mtime, reverse=True)
+            if not html_reports:
+                print("[!] No reports found in reports/ directory")
+                sys.exit(1)
+            latest_report = html_reports[0]
+            print(f"[+] Opening report: {latest_report.name}")
+            if platform.system() == 'Darwin':
+                subprocess.run(['open', str(latest_report)])
+            elif platform.system() == 'Windows':
+                subprocess.run(['start', str(latest_report)], shell=True)
+            else:
+                subprocess.run(['xdg-open', str(latest_report)])
+            sys.exit(0)
+        except Exception as e:
+            print(f"[!] Error opening report: {e}")
+            sys.exit(1)
     
     # Handle update request
     if args.update:
@@ -240,6 +266,22 @@ Examples:
                     print(f"🌐 Opening report in browser...\n")
                 except Exception as e:
                     print(f"⚠ Could not auto-open: {e}\n")
+            # Ask if user wants to open report (only for HTML, and if TTY)
+            elif args.auto_report == 'html' and sys.stdin.isatty():
+                try:
+                    response = input("📄 Open report in browser? [Y/n]: ").strip().lower()
+                    if response in ['', 'y', 'yes']:
+                        import subprocess
+                        import platform
+                        if platform.system() == 'Darwin':
+                            subprocess.run(['open', result.report_path])
+                        elif platform.system() == 'Windows':
+                            subprocess.run(['start', result.report_path], shell=True)
+                        else:
+                            subprocess.run(['xdg-open', result.report_path])
+                        print("🌐 Opening...\n")
+                except (KeyboardInterrupt, EOFError):
+                    print("\n")
         sys.exit(0)
     
     # Route to appropriate handler
