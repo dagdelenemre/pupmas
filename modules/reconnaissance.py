@@ -52,7 +52,8 @@ class ReconnaissanceEngine:
         80: "HTTP", 110: "POP3", 143: "IMAP", 443: "HTTPS",
         445: "SMB", 3306: "MySQL", 3389: "RDP", 5432: "PostgreSQL",
         5984: "CouchDB", 6379: "Redis", 8080: "HTTP-Alt", 8443: "HTTPS-Alt",
-        9200: "Elasticsearch", 27017: "MongoDB", 3000: "Node.js"
+        9200: "Elasticsearch", 27017: "MongoDB", 3000: "Node.js",
+        465: "SMTPS", 587: "SMTP-Submission", 993: "IMAPS", 995: "POP3S"
     }
     
     def __init__(self):

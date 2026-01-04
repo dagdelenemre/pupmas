@@ -349,6 +349,38 @@ class AutomatedPipeline:
                                 print_success(f"[+] Found {len(sub_result.vulnerabilities)} vulns on {subdomain}!")
                         except Exception as e:
                             pass
+
+        # Test subdomains that are NOT on Cloudflare IP ranges
+        if self.result.recon_results and self.result.recon_results.subdomain:
+            print_info("\n[*] Testing subdomains not behind Cloudflare...")
+            for subdomain_info in self.result.recon_results.subdomain:
+                if '(' in subdomain_info and ')' in subdomain_info:
+                    subdomain = subdomain_info.split('(')[0].strip()
+                    sub_ip = subdomain_info.split('(')[1].rstrip(')')
+                else:
+                    subdomain = subdomain_info.strip()
+                    sub_ip = None
+                
+                # Skip Cloudflare IP ranges
+                if sub_ip and self.waf_bypass._is_cloudflare_ip(sub_ip):
+                    continue
+                
+                # Try HTTP then HTTPS
+                for protocol in ["http", "https"]:
+                    sub_url = f"{protocol}://{subdomain}"
+                    try:
+                        print_info(f"  Testing {sub_url} (non-CDN)...")
+                        sub_result = self.exploit.full_website_scan(sub_url, host_header=subdomain)
+                        if sub_result.vulnerabilities:
+                            self.result.vulnerabilities_found += len(sub_result.vulnerabilities)
+                            # Ensure exploitation_results is not None
+                            if not self.result.exploitation_results:
+                                self.result.exploitation_results = sub_result
+                            else:
+                                self.result.exploitation_results.vulnerabilities.extend(sub_result.vulnerabilities)
+                            print_success(f"[+] Found {len(sub_result.vulnerabilities)} vulns on {subdomain}!")
+                    except Exception as e:
+                        print_warning(f"[!] Subdomain test error on {subdomain}: {e}")
     
     def _phase_cve_analysis(self):
         """Phase 3: CVE and vulnerability analysis"""
