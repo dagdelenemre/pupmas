@@ -136,8 +136,6 @@ Examples:
     pipeline_group = parser.add_argument_group('Automated Pipeline (NEW - Do Everything!)')
     pipeline_group.add_argument('--auto-scan', '-auS', action='store_true',
                                help='🚀 RUN FULL AUTOMATED SCAN: Recon + Exploit + CVE + Timeline + Report')
-    pipeline_group.add_argument('--auto-target', '-auTg', metavar='TARGET',
-                               help='Target IP/domain for automated scan')
     pipeline_group.add_argument('-M1', action='store_const', dest='auto_profile', const='passive',
                                help='Mode 1: Passive/Stealth scan (20 ports, light)')
     pipeline_group.add_argument('-M2', action='store_const', dest='auto_profile', const='active',
@@ -146,16 +144,18 @@ Examples:
                                help='Mode 3: Aggressive/Full scan (1000 ports, all tests)')
     pipeline_group.add_argument('--auto-type', choices=['pentest', 'ctf', 'redteam', 'blueteam'],
                                default='pentest', help='Operation type for timeline')
-    pipeline_group.add_argument('--auto-report', choices=['html', 'json'],
+    pipeline_group.add_argument('--auto-report','-auR', choices=['html', 'json'],
                                default='html', help='Report format')
-    pipeline_group.add_argument('--auto-no-exploit', action='store_true',
+    pipeline_group.add_argument('--auto-no-exploit','-auNE' ,action='store_true',
                                help='Skip exploitation/vulnerability testing')
-    pipeline_group.add_argument('--auto-no-db', action='store_true',
+    pipeline_group.add_argument('--auto-no-db','-auNDB' ,action='store_true',
                                help='Skip database saving')
     pipeline_group.add_argument('--auto-open', action='store_true',
                                help='Automatically open report in browser when complete')
     pipeline_group.add_argument('--no-prompt', '-n', action='store_true',
                                help='Skip interactive prompts (e.g., report opening question)')
+    pipeline_group.add_argument('target', nargs='?', metavar='TARGET',
+                               help='Target IP/domain (required with -auS)')
     # Set default for auto_profile if not set by -M1/-M2/-M3
     parser.set_defaults(auto_profile='active')
     
@@ -236,15 +236,15 @@ Examples:
     # AUTOMATED PIPELINE - One command does it all!
     # ============================================
     if args.auto_scan:
-        if not args.auto_target:
-            print("[!] Error: -auTg TARGET required")
-            print("[*] Example: pupmas -auS -auTg 10.10.10.50")
-            print("[*] Example: pupmas -auS -auTg -n 10.10.10.50")
-            print("[*] Example: pupmas -auS -auTg -M3 10.10.10.50")
+        if not args.target:
+            print("[!] Error: TARGET required with -auS")
+            print("[*] Example: pupmas -auS 10.10.10.50")
+            print("[*] Example: pupmas -auS -n 10.10.10.50")
+            print("[*] Example: pupmas -auS -M3 -n 10.10.10.50")
             sys.exit(1)
         
         config = PipelineConfig(
-            target=args.auto_target,
+            target=args.target,
             operation_type=args.auto_type,
             recon_profile=args.auto_profile,
             enable_exploitation=not args.auto_no_exploit,
