@@ -1,16 +1,16 @@
 # Core dependencies
-rich>=13.7.0
-textual>=0.47.1
+rich>=14.2.0
+textual>=7.0.0
 pyyaml>=6.0.1
 requests>=2.31.0
 python-dateutil>=2.8.2
 
-# Database
-sqlalchemy>=2.0.25
+# Database (Python 3.13 compatibility)
+sqlalchemy>=2.0.45
 
 # Security and networking
 scapy>=2.5.0
-dnspython>=2.4.2
+dnspython>=2.8.0
 python-nmap>=0.7.1
 shodan>=1.31.0
 censys>=2.2.8

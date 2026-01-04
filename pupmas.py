@@ -98,7 +98,7 @@ Examples:
     recon_group = parser.add_argument_group('Reconnaissance Operations')
     recon_group.add_argument('--recon', action='store_true',
                             help='Start reconnaissance module')
-    recon_group.add_argument('--target', metavar='TARGET',
+    recon_group.add_argument('--target', dest='recon_target', metavar='TARGET',
                             help='Target IP/domain for reconnaissance')
     recon_group.add_argument('--recon-profile', choices=['passive', 'active', 'aggressive'],
                             default='passive', help='Reconnaissance profile')

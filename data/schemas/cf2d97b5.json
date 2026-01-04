@@ -1,0 +1,46 @@
+{
+  "schema_id": "cf2d97b5",
+  "name": "Credential Dumping via Mimikatz",
+  "description": "Detection of Mimikatz credential dumping tool usage",
+  "attack_phases": [
+    "credential_access"
+  ],
+  "mitre_techniques": [
+    "T1003.001",
+    "T1558.003"
+  ],
+  "indicators": [
+    {
+      "type": "process",
+      "value": "mimikatz.exe",
+      "confidence": 1.0,
+      "description": "",
+      "tags": []
+    },
+    {
+      "type": "command",
+      "value": "sekurlsa::logonpasswords",
+      "confidence": 1.0,
+      "description": "",
+      "tags": []
+    },
+    {
+      "type": "file_path",
+      "value": "lsass.dmp",
+      "confidence": 0.9,
+      "description": "",
+      "tags": []
+    }
+  ],
+  "detection_rules": [],
+  "prerequisites": [],
+  "impact": "Credential theft leading to lateral movement",
+  "likelihood": "high",
+  "tags": [
+    "mimikatz",
+    "credentials",
+    "lsass"
+  ],
+  "created_at": "2026-01-05T00:49:17.412455",
+  "updated_at": "2026-01-05T00:49:17.413769"
+}

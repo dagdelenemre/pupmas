@@ -27,6 +27,7 @@ class AttackPhase(Enum):
     PRIVILEGE_ESCALATION = "privilege_escalation"
     LATERAL_MOVEMENT = "lateral_movement"
     PERSISTENCE = "persistence"
+    EXFILTRATION = "exfiltration"
 
 
 class DetectionRuleType(Enum):

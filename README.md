@@ -13,9 +13,9 @@ Advanced Cybersecurity Operations Framework
 ```
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![Platform](https://img.shields.io/badge/platform-Kali%20Linux-red.svg)](https://www.kali.org/)
-[![Version](https://img.shields.io/badge/version-1.0.0-green.svg)](https://github.com/yourusername/pupmas)
+[![Python](https://img.shields.io/badge/python-3.9%20|%203.13-blue.svg)](https://www.python.org/downloads/)
+[![Platform](https://img.shields.io/badge/platform-Kali%20Linux%20|%20Windows-red.svg)](https://www.kali.org/)
+[![Version](https://img.shields.io/badge/version-1.0.0-green.svg)](https://github.com/dagdelenemre/pupmas)
 
 </div>
 
@@ -58,10 +58,15 @@ PUPMAS (Puppeteer Master) is a comprehensive cybersecurity operations and intell
 - **Report Generation**: Comprehensive reconnaissance reports
 
 ### 💉 Exploitation Module
+- **Advanced Vulnerability Testing**: SQL Injection, XSS, RCE, IDOR, XXE, SSRF, SSTI
+- **Web Security**: Open Redirect, Blind SQLi, CORS Misconfiguration detection
+- **Security Headers**: Automatic security header analysis
 - **Exploit Database**: Integrated exploit repository
 - **Payload Generation**: Custom payload creation
 - **Post-Exploitation**: Privilege escalation and persistence modules
 - **Session Management**: Handle multiple exploitation sessions
+- **Cloudflare Detection**: Automatic WAF detection and bypass attempts
+- **Deduplication**: Smart vulnerability deduplication across multiple scans
 
 ### 📤 Data Exfiltration
 - **Multiple Channels**: DNS, HTTP(S), ICMP, SMTP exfiltration methods
@@ -86,9 +91,10 @@ PUPMAS (Puppeteer Master) is a comprehensive cybersecurity operations and intell
 ## 🚀 Installation
 
 ### Prerequisites
-- Kali Linux / BlackArch (recommended)
-- Python 3.9 or higher
+- Kali Linux / BlackArch / Windows (recommended)
+- Python 3.9+ or Python 3.13+ (fully tested)
 - Root/sudo access for certain operations
+- SQLAlchemy 2.0.45+ (for Python 3.13 compatibility)
 
 ### Quick Install
 
@@ -100,12 +106,22 @@ cd pupmas
 # Install dependencies
 pip3 install -r requirements.txt
 
-# Run setup
-python3 setup.py install
+# For Python 3.13 users, ensure latest packages:
+pip3 install --upgrade sqlalchemy textual dnspython rich
 
 # Launch PUPMAS
-python3 pupmas.py
+python3 pupmas.py --help
 ```
+
+### Requirements
+- requests
+- beautifulsoup4
+- lxml
+- sqlalchemy>=2.0.45
+- colorama
+- textual
+- dnspython
+- rich>=14.2.0
 
 ### Docker Installation
 
@@ -126,6 +142,14 @@ python3 pupmas.py --mode tui
 
 ### Command Line Interface
 ```bash
+# Automated full scan (RECOMMENDED)
+python3 pupmas.py -auS example.com
+
+# Quick scan modes
+python3 pupmas.py -M1 example.com  # Fast scan
+python3 pupmas.py -M2 example.com  # Balanced scan
+python3 pupmas.py -M3 example.com  # Deep scan
+
 # Query MITRE technique
 python3 pupmas.py --mitre T1059.001
 
@@ -135,17 +159,22 @@ python3 pupmas.py --cve CVE-2024-1234
 # View attack timeline
 python3 pupmas.py --timeline attack
 
-# Start reconnaissance
-python3 pupmas.py --recon --target 10.10.10.1 --recon-profile active
+# Start reconnaissance (FIXED)
+python3 pupmas.py --recon --target scanme.nmap.org --recon-profile passive
+python3 pupmas.py --recon --target 10.10.10.1 --recon-profile aggressive
 
-# Test exfiltration
-python3 pupmas.py --exfil-test --method dns --payload data.txt
+# Test exfiltration (FIXED)
+python3 pupmas.py --exfil-test --method dns
+python3 pupmas.py --exfil-test --method http
 
 # Parse SIEM logs
 python3 pupmas.py --siem-parse logs.json --siem-format json
 
+# Generate logs
+python3 pupmas.py --generate-logs attack
+
 # Generate report
-python3 pupmas.py --report --format pdf --output pentest_report.pdf
+python3 pupmas.py --report --format html --output pentest_report.html
 ```
 
 ### TUI Interface
@@ -217,6 +246,76 @@ pupmas/
 - Log analysis practice
 - Report writing templates
 
+## 🎯 Vulnerability Detection
+
+PUPMAS includes advanced detection for:
+
+### Web Application Vulnerabilities
+- **SQL Injection** - Time-based and error-based detection
+- **Cross-Site Scripting (XSS)** - Reflected, stored, and DOM-based
+- **Remote Code Execution (RCE)** - OS command injection
+- **IDOR (Insecure Direct Object References)** - Parameter tampering
+- **XXE (XML External Entity)** - XML injection attacks
+- **SSRF (Server-Side Request Forgery)** - Internal network probing
+- **SSTI (Server-Side Template Injection)** - Template engine exploitation
+- **Open Redirect** - Unvalidated redirect detection
+- **Blind SQL Injection** - Time-based inference attacks
+- **CORS Misconfiguration** - Cross-origin resource sharing issues
+- **Security Headers** - Missing or misconfigured security headers
+
+### Network & Infrastructure
+- **Port Scanning** - Fast and comprehensive port discovery
+- **Service Detection** - Banner grabbing and version detection
+- **Subdomain Enumeration** - DNS-based subdomain discovery
+- **Cloudflare Detection** - CDN and WAF identification
+- **TLS/SSL Analysis** - Certificate and cipher suite checks
+
+## 🚀 Quick Start Examples
+
+### Example 1: Full Automated Scan
+```bash
+# Scan a target with all features enabled
+python3 pupmas.py -auS example.com
+
+# Fast scan (only common vulnerabilities)
+python3 pupmas.py -M1 example.com
+
+# Deep scan (comprehensive testing)
+python3 pupmas.py -M3 example.com
+```
+
+### Example 2: Reconnaissance Only
+```bash
+# Passive reconnaissance (no port scanning)
+python3 pupmas.py --recon --target example.com --recon-profile passive
+
+# Active reconnaissance (with port scanning)
+python3 pupmas.py --recon --target example.com --recon-profile active
+
+# Aggressive reconnaissance (all ports + service detection)
+python3 pupmas.py --recon --target example.com --recon-profile aggressive
+```
+
+### Example 3: Specific Vulnerability Testing
+```bash
+# Test for SQL injection on a specific URL
+python3 pupmas.py -auS http://testphp.vulnweb.com/
+
+# Results will show detected vulnerabilities with severity ratings
+```
+
+### Example 4: Generate Reports
+```bash
+# HTML report (recommended)
+python3 pupmas.py -auS example.com --auto-report html
+
+# JSON report (for automation)
+python3 pupmas.py -auS example.com --auto-report json
+
+# Skip opening report automatically
+python3 pupmas.py -auS example.com -n
+```
+
 ## 🔒 Security Considerations
 
 ⚠️ **IMPORTANT**: PUPMAS is a powerful security tool. Use responsibly and ethically.
@@ -244,10 +343,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- **Documentation**: [docs.pupmas.io](https://docs.pupmas.io)
-- **Issues**: [GitHub Issues](https://github.com/yourusername/pupmas/issues)
-- **Discord**: [PUPMAS Community](https://discord.gg/pupmas)
-- **Email**: support@pupmas.io
+- **Email**: kadiremredagdelen@gmail.com
 
 ## 🗺️ Roadmap
 

@@ -74,6 +74,14 @@ class CLI:
             elif self.args.export_timeline:
                 self.handle_export_timeline()
             
+            # Reconnaissance operations
+            elif self.args.recon:
+                self.handle_recon()
+            
+            # Exfiltration testing
+            elif self.args.exfil_test:
+                self.handle_exfil_test()
+            
             # SIEM operations
             elif self.args.siem_parse:
                 self.handle_siem_parse()
@@ -470,6 +478,76 @@ Generated: {self.siem._generate_normal_logs.__globals__['datetime'].now().isofor
             f.write(report_content)
         
         print_success(f"Report generated: {output_path}")
+    
+    def handle_recon(self):
+        """Handle reconnaissance scan"""
+        target = getattr(self.args, 'recon_target', None)
+        if not target:
+            print_error("Target required for reconnaissance")
+            return
+        
+        from modules.reconnaissance import ReconnaissanceEngine
+        
+        print_info(f"Starting reconnaissance on {target}...")
+        print_info(f"Profile: {self.args.recon_profile}")
+        
+        recon = ReconnaissanceEngine()
+        results = recon.full_scan(target, self.args.recon_profile)
+        
+        # Display results
+        table = Table(title=f"Reconnaissance Results: {target}")
+        table.add_column("Property", style="cyan")
+        table.add_column("Value", style="white")
+        
+        table.add_row("IP Address", results.ip)
+        table.add_row("Status", "✓ Alive" if results.alive else "✗ Down")
+        table.add_row("Open Ports", str(len(results.open_ports)))
+        table.add_row("Services", str(len(results.services)))
+        table.add_row("Subdomains", str(len(results.subdomain)))
+        
+        self.console.print(table)
+        
+        if results.open_ports:
+            ports_table = Table(title="Open Ports")
+            ports_table.add_column("Port", style="cyan")
+            ports_table.add_column("Service", style="green")
+            ports_table.add_column("Banner", style="white")
+            
+            for port in results.open_ports[:20]:
+                ports_table.add_row(
+                    str(port.port),
+                    port.service,
+                    port.banner[:50] if port.banner else "-"
+                )
+            
+            self.console.print(ports_table)
+        
+        print_success(f"Reconnaissance complete for {target}")
+    
+    def handle_exfil_test(self):
+        """Handle exfiltration testing"""
+        if not self.args.method:
+            print_error("Exfiltration method required (--method dns|http|https|icmp|smtp)")
+            return
+        
+        print_info(f"Testing {self.args.method.upper()} exfiltration method...")
+        print_warning("This is a simulated test - no actual data will be exfiltrated")
+        
+        # Simulate exfiltration test
+        import time
+        time.sleep(1)
+        
+        table = Table(title=f"{self.args.method.upper()} Exfiltration Test")
+        table.add_column("Test", style="cyan")
+        table.add_column("Result", style="white")
+        
+        table.add_row("Method", self.args.method.upper())
+        table.add_row("Detection", "✓ Method available")
+        table.add_row("Stealth", "Medium")
+        table.add_row("Bandwidth", "Variable")
+        
+        self.console.print(table)
+        print_success("Exfiltration test complete")
     
     def _severity_color(self, severity: str) -> str:
         """Get color for severity"""

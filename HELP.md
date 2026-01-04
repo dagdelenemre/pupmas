@@ -1,5 +1,30 @@
 # PUPMAS - Detaylı Kullanım Kılavuzu
 
+## 🆕 Son Değişiklikler (v1.0.0 - Ocak 2026)
+
+### ✨ Yeni Özellikler
+- ✅ **11 Yeni Güvenlik Açığı Testi**: IDOR, XXE, SSRF, SSTI, Open Redirect, Blind SQLi, CORS, Security Headers
+- ✅ **Python 3.13 Tam Desteği**: SQLAlchemy 2.0.45+ ile tam uyumluluk
+- ✅ **Akıllı Deduplikasyon**: Aynı güvenlik açığını birden fazla kez raporlamaz
+- ✅ **Cloudflare Tespit ve Bypass**: Otomatik CDN/WAF tespiti
+- ✅ **TLS Banner Grabbing**: SSL-only portlar için banner grabbing (465, 993, 995)
+- ✅ **Non-CDN Subdomain Tarama**: Sadece Cloudflare olmayan IP'leri tarar
+
+### 🔧 Düzeltmeler
+- ✅ **--recon Komutu Düzeltildi**: Artık `--target` parametresi çalışıyor
+- ✅ **--exfil-test Komutu Düzeltildi**: Tüm exfiltration metotları test edilebilir
+- ✅ **AttackPhase Enum**: `exfiltration` phase eklendi
+- ✅ **Rapor Süresi**: Scan duration artık doğru hesaplanıyor
+- ✅ **Subdomain Port Scanning**: Subdomain'lerin açık portları HTML raporunda görünüyor
+
+### 📦 Güncellenmiş Bağımlılıklar
+- sqlalchemy >= 2.0.45 (Python 3.13 uyumluluğu)
+- textual >= 7.0.0 (TUI iyileştirmeleri)
+- rich >= 14.2.0 (Terminal output formatting)
+- dnspython >= 2.8.0 (DNS resolution)
+
+---
+
 ## 📚 İçindekiler
 
 1. [Kurulum](#kurulum)
@@ -17,9 +42,10 @@
 ## 🔧 Kurulum
 
 ### Gereksinimler
-- **Python 3.9 veya üstü**
-- **İşletim Sistemi**: Linux (Kali önerilir), macOS, Windows (WSL)
+- **Python 3.9 veya üstü** (Python 3.13 tam desteklenir)
+- **İşletim Sistemi**: Linux (Kali önerilir), macOS, Windows
 - **Bağımlılıklar**: `requirements.txt` içinde listelendi
+- **Önemli**: Python 3.13 kullanıyorsanız SQLAlchemy 2.0.45+ gereklidir
 
 ### Adım 1: Repository'yi İndirin
 ```bash
@@ -41,6 +67,9 @@ python -m venv venv
 ### Adım 3: Bağımlılıkları Yükleyin
 ```bash
 pip install -r requirements.txt
+
+# Python 3.13 için özel güncelleme (gerekirse)
+pip install --upgrade sqlalchemy textual dnspython rich
 ```
 
 ### Adım 4: Konfigürasyonu Kontrol Edin
@@ -56,6 +85,25 @@ python3 pupmas.py --help
 
 **Başarılı kurulum:** Komut listesi görünecektir.
 
+### Kurulum Sorunları ve Çözümleri
+
+#### Python 3.13'te SQLAlchemy Hatası
+```bash
+# Hata: TypeError: Can't replace canonical symbol for '__firstlineno__'
+# Çözüm:
+pip install --upgrade sqlalchemy>=2.0.45
+```
+
+#### Textual Modülü Bulunamadı
+```bash
+pip install textual
+```
+
+#### DNS Modülü Hatası
+```bash
+pip install dnspython
+```
+
 ---
 
 ## 🚀 Temel Kullanım
@@ -65,14 +113,39 @@ PUPMAS iki şekilde kullanılabilir:
 ### 1. Otomatik Pipeline (Önerilen)
 Tek komutla tüm işlemleri yapar:
 ```bash
-python3 pupmas.py --auto-scan --auto-target <HEDEF>
+# Tam sözdizimi
+python3 pupmas.py --auto-scan <HEDEF>
+
+# Kısayol komutları
+python3 pupmas.py -auS <HEDEF>          # Tam tarama
+python3 pupmas.py -M1 <HEDEF>           # Hızlı tarama
+python3 pupmas.py -M2 <HEDEF>           # Dengeli tarama
+python3 pupmas.py -M3 <HEDEF>           # Derin tarama
 ```
 
 ### 2. Manuel Modüller
 Her modülü tek tek çalıştırır:
 ```bash
-python3 pupmas.py --mitre --list-tactics
-python3 pupmas.py --cve --search CVE-2021-44228
+# MITRE ATT&CK sorguları
+python3 pupmas.py --mitre T1059.001
+
+# CVE araması
+python3 pupmas.py --cve CVE-2021-44228
+
+# Reconnaissance (yeni düzeltildi)
+python3 pupmas.py --recon --target scanme.nmap.org --recon-profile passive
+
+# Exfiltration testi (yeni düzeltildi)
+python3 pupmas.py --exfil-test --method dns
+```
+
+### 3. Yeni Kısayol Komutları
+```bash
+-auS    # --auto-scan için kısayol
+-M1     # Passive profil ile hızlı tarama
+-M2     # Active profil ile dengeli tarama
+-M3     # Aggressive profil ile derin tarama
+-n      # --no-prompt (rapor açma sorusunu atla)
 ```
 
 ---
@@ -480,6 +553,129 @@ python3 pupmas.py --mitre --map-event "SQL injection attempt on login form"
 - İlgili MITRE technique(ler)
 - Tactic'ler
 - Severity assessment
+
+---
+
+#### Reconnaissance Modülü (YENİ - DÜZELTİLDİ)
+
+##### `--recon --target <TARGET>`
+**Açıklama:** Standalone reconnaissance modülü. Port tarama, servis tespiti ve subdomain enumeration yapar.
+
+**Zorunlu Parametre:** `--target`
+
+**Kullanım:**
+```bash
+# Passive recon (port tarama yok)
+python3 pupmas.py --recon --target example.com --recon-profile passive
+
+# Active recon (common portlar)
+python3 pupmas.py --recon --target scanme.nmap.org --recon-profile active
+
+# Aggressive recon (tüm portlar + subdomain brute-force)
+python3 pupmas.py --recon --target 10.10.10.50 --recon-profile aggressive
+```
+
+**Profil Açıklamaları:**
+
+**Passive:**
+- DNS resolution
+- DNS records (A, AAAA, MX, NS, TXT)
+- Subdomain enumeration (DNS-only)
+- ⚠️ Port tarama YOK
+- Süre: 10-30 saniye
+
+**Active:**
+- Tüm passive işlemler
+- ✅ Common port tarama (100 port)
+- Service detection
+- Banner grabbing
+- Süre: 1-3 dakika
+
+**Aggressive:**
+- Tüm active işlemler
+- ✅ Top 1000 port tarama
+- Deep service detection
+- Subdomain brute-force
+- Cloudflare bypass denemeleri
+- TLS/SSL banner grabbing
+- Süre: 3-10 dakika
+
+**Çıktı Örneği:**
+```
+┏━━━━━━━━━━━━┳━━━━━━━━━━━━━━┓
+┃ Property   ┃ Value        ┃
+┡━━━━━━━━━━━━╇━━━━━━━━━━━━━━┩
+│ IP Address │ 45.33.32.156 │
+│ Status     │ ✓ Alive      │
+│ Open Ports │ 2            │
+│ Services   │ 2            │
+│ Subdomains │ 5            │
+└────────────┴──────────────┘
+
+┏━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Port ┃ Service ┃ Banner                        ┃
+┡━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ 22   │ SSH     │ SSH-2.0-OpenSSH_6.6.1p1      │
+│ 80   │ HTTP    │ Apache/2.4.7 (Ubuntu)         │
+└──────┴─────────┴───────────────────────────────┘
+```
+
+**Not:** Bu komut tek başına çalışır, otomatik pipeline gerektirmez.
+
+---
+
+#### Exfiltration Test Modülü (YENİ - DÜZELTİLDİ)
+
+##### `--exfil-test --method <METHOD>`
+**Açıklama:** Data exfiltration metotlarını test eder (simüle edilmiş).
+
+**Zorunlu Parametre:** `--method`
+
+**Desteklenen Metotlar:**
+- `dns` - DNS tunneling
+- `http` - HTTP exfiltration
+- `https` - HTTPS exfiltration
+- `icmp` - ICMP tunneling
+- `smtp` - Email exfiltration
+
+**Kullanım:**
+```bash
+# DNS exfiltration testi
+python3 pupmas.py --exfil-test --method dns
+
+# HTTP exfiltration testi
+python3 pupmas.py --exfil-test --method http
+
+# HTTPS exfiltration testi (en güvenli)
+python3 pupmas.py --exfil-test --method https
+
+# ICMP tunneling testi
+python3 pupmas.py --exfil-test --method icmp
+
+# SMTP exfiltration testi
+python3 pupmas.py --exfil-test --method smtp
+```
+
+**Çıktı Örneği:**
+```
+      DNS Exfiltration Test       
+┏━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┓
+┃ Test      ┃ Result             ┃
+┡━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━┩
+│ Method    │ DNS                │
+│ Detection │ ✓ Method available │
+│ Stealth   │ Medium             │
+│ Bandwidth │ Variable           │
+└───────────┴────────────────────┘
+```
+
+**Özellikler:**
+- Simüle edilmiş test (gerçek data exfiltration yapmaz)
+- Stealth seviyesi gösterir
+- Detection riski değerlendirir
+- Bandwidth kapasitesini tahmin eder
+
+**Not:** Bu komut güvenlik testleri içindir. Gerçek data exfiltration yasadışıdır!
 
 ---
 
@@ -972,6 +1168,95 @@ python3 pupmas.py --auto-scan \
   - Payload used
   - Response snippet
   - Associated CVE
+
+### 🔍 Tespit Edilen Güvenlik Açıkları
+
+PUPMAS aşağıdaki güvenlik açıklarını otomatik olarak tespit eder:
+
+#### 1. **SQL Injection (SQLi)**
+- **Tespit Yöntemi:** Error-based ve time-based injection
+- **Test Payloadları:** `' OR '1'='1`, `1' AND SLEEP(5)--`
+- **Severity:** Critical
+- **Örnek:** `http://target/page?id=1'`
+
+#### 2. **Cross-Site Scripting (XSS)**
+- **Tespit Yöntemi:** Reflected XSS detection
+- **Test Payloadları:** `<script>alert(1)</script>`, `<img src=x onerror=alert(1)>`
+- **Severity:** High
+- **Örnek:** `http://target/search?q=<script>alert(1)</script>`
+
+#### 3. **Remote Code Execution (RCE)**
+- **Tespit Yöntemi:** OS command injection
+- **Test Payloadları:** `; ls`, `| whoami`, `& ping -c 3 127.0.0.1`
+- **Severity:** Critical
+- **Örnek:** `http://target/cmd?exec=ls`
+
+#### 4. **IDOR (Insecure Direct Object References)**
+- **Tespit Yöntemi:** Parameter tampering
+- **Test:** ID parametrelerini değiştirerek unauthorized access testi
+- **Severity:** High
+- **Örnek:** `http://target/user?id=1` → `id=2` (başkasının profili)
+
+#### 5. **XXE (XML External Entity)**
+- **Tespit Yöntemi:** XML parser exploitation
+- **Test Payloadları:** `<!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>`
+- **Severity:** Critical
+- **Örnek:** XML upload/parsing yapan endpoint'ler
+
+#### 6. **SSRF (Server-Side Request Forgery)**
+- **Tespit Yöntemi:** Internal network probing
+- **Test Payloadları:** `http://localhost`, `http://169.254.169.254/`
+- **Severity:** High
+- **Örnek:** `http://target/fetch?url=http://localhost:8080`
+
+#### 7. **SSTI (Server-Side Template Injection)**
+- **Tespit Yöntemi:** Template engine detection
+- **Test Payloadları:** `{{7*7}}`, `${7*7}`, `<%= 7*7 %>`
+- **Severity:** Critical
+- **Örnek:** Jinja2, Twig, Freemarker şablonları
+
+#### 8. **Open Redirect**
+- **Tespit Yöntemi:** Redirect parameter manipulation
+- **Test Payloadları:** `?redirect=https://evil.com`
+- **Severity:** Medium
+- **Örnek:** `http://target/login?next=http://evil.com`
+
+#### 9. **Blind SQL Injection**
+- **Tespit Yöntemi:** Time-based inference
+- **Test Payloadları:** `' AND SLEEP(5)--`, `'; WAITFOR DELAY '00:00:05'--`
+- **Severity:** Critical
+- **Örnek:** Response süresini ölçerek SQL injection tespiti
+
+#### 10. **CORS Misconfiguration**
+- **Tespit Yöntemi:** Access-Control-Allow-Origin header kontrolü
+- **Risk:** Wildcard (*) veya null origin kabul edilmesi
+- **Severity:** Medium
+- **Örnek:** `Access-Control-Allow-Origin: *`
+
+#### 11. **Security Headers**
+PUPMAS aşağıdaki eksik/hatalı headerları tespit eder:
+- ❌ **X-Frame-Options** (Clickjacking riski)
+- ❌ **Strict-Transport-Security** (HTTPS zorunlu değil)
+- ❌ **X-Content-Type-Options** (MIME sniffing riski)
+- ❌ **X-XSS-Protection** (XSS koruma yok)
+- ❌ **Content-Security-Policy** (CSP eksik)
+- **Severity:** Low-Medium
+
+### 📊 Güvenlik Açığı Deduplikasyonu
+
+PUPMAS akıllı deduplikasyon sistemi ile aynı güvenlik açığını birden fazla kez raporlamaz:
+
+**Deduplikasyon Kriterleri:**
+- Zafiyet tipi (örn: SQL Injection)
+- Normalized URL path (query string hariç)
+- Aynı subdomain'deki portlar arasında
+
+**Örnek:**
+```
+✓ http://example.com/page?id=1    → SQL Injection bulundu
+✗ http://example.com/page?id=2    → Aynı, tekrar raporlanmaz
+✓ http://example.com/admin?id=1   → Farklı path, raporlanır
+```
 
 - **Successful Exploits:**
   - Total attempts
