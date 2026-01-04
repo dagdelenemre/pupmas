@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -e
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# Eğer venv varsa aktive et
+if [ -d "$SCRIPT_DIR/venv" ]; then
+  source "$SCRIPT_DIR/venv/bin/activate"
+fi
+exec python3 "$SCRIPT_DIR/pupmas.py" "$@"
