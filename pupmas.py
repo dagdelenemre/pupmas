@@ -148,6 +148,8 @@ Examples:
                                help='Skip exploitation/vulnerability testing')
     pipeline_group.add_argument('--auto-no-db', action='store_true',
                                help='Skip database saving')
+    pipeline_group.add_argument('--auto-open', action='store_true',
+                               help='Automatically open report in browser when complete')
     
     # General options
     parser.add_argument('--config', metavar='FILE',
@@ -198,6 +200,21 @@ Examples:
         
         if result.report_path:
             print(f"\n✅ Report saved: {result.report_path}\n")
+            
+            # Auto-open report if requested
+            if args.auto_open:
+                import subprocess
+                import platform
+                try:
+                    if platform.system() == 'Darwin':  # macOS
+                        subprocess.run(['open', result.report_path])
+                    elif platform.system() == 'Windows':
+                        subprocess.run(['start', result.report_path], shell=True)
+                    else:  # Linux
+                        subprocess.run(['xdg-open', result.report_path])
+                    print(f"🌐 Opening report in browser...\n")
+                except Exception as e:
+                    print(f"⚠ Could not auto-open: {e}\n")
         sys.exit(0)
     
     # Route to appropriate handler
