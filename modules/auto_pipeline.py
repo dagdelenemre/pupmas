@@ -105,13 +105,13 @@ class AutomatedPipeline:
             # Phase 5: SIEM Analysis
             if self.config.enable_siem:
                 self._phase_siem()
+
+            # Calculate duration before report generation so reports show real time
+            self.result.end_time = datetime.now().isoformat()
+            self.result.duration = time.time() - self.start_time
             
             # Phase 6: Database & Reporting
             self._phase_finalization()
-            
-            # Calculate duration
-            self.result.end_time = datetime.now().isoformat()
-            self.result.duration = time.time() - self.start_time
             
             # Print summary
             self._print_summary()
@@ -736,6 +736,21 @@ class AutomatedPipeline:
 """
                 for idx, subdomain in enumerate(self.result.recon_results.subdomain[:20], 1):
                     html += f"<tr><td>{idx}</td><td>{subdomain}</td></tr>"
+                html += "</table>"
+
+            # Non-CDN subdomain ports (if any)
+            if self.result.recon_results.subdomain_ports:
+                html += """
+    <h3>Non-CDN Subdomain Ports</h3>
+    <table>
+        <tr><th>Subdomain</th><th>Open Ports</th></tr>
+"""
+                for subdomain, ports in self.result.recon_results.subdomain_ports.items():
+                    if ports:
+                        port_list = ", ".join(f"{p.port}/{p.service}" for p in ports)
+                    else:
+                        port_list = "None"
+                    html += f"<tr><td>{subdomain}</td><td>{port_list}</td></tr>"
                 html += "</table>"
         
         # Exploitation Results
