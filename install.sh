@@ -44,12 +44,15 @@ if [ -f config/config.yaml.example ] && [ ! -f config/config.yaml ]; then
 fi
 
 # Create launcher
-cat > /usr/local/bin/pupmas <<'EOF'
+cat > /usr/local/bin/pupmas << 'EOFMARKER'
 #!/usr/bin/env bash
 APP_DIR="/opt/pupmas"
-source "$APP_DIR/venv/bin/activate"
+if [ -d "$APP_DIR/venv" ]; then
+  source "$APP_DIR/venv/bin/activate"
+fi
 exec python3 "$APP_DIR/pupmas.py" "$@"
-EOF
+EOFMARKER
+
 chmod +x /usr/local/bin/pupmas
 
 echo "[✓] Done! Run: pupmas --help"
