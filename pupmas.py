@@ -144,6 +144,18 @@ Examples:
                                help='Advanced exploitation engine (format: IP:PORT)')
     advanced_group.add_argument('--exploit-chain', action='store_true',
                                help='Generate multi-stage exploit chain')
+    advanced_group.add_argument('--get-shell', metavar='TARGET',
+                               help='🎯 AUTO GET SHELL: Try all exploits to get shell access (IP or domain)')
+    advanced_group.add_argument('--ssh-brute', metavar='TARGET',
+                               help='🔓 SSH Brute Force attack (format: IP or user@IP)')
+    advanced_group.add_argument('--ssh-wordlist', metavar='FILE',
+                               help='Custom wordlist for SSH brute force')
+    advanced_group.add_argument('--web-exploit', metavar='URL',
+                               help='🌐 Web exploitation: SQLi, XSS, RCE detection and exploitation')
+    advanced_group.add_argument('--exploit-db', metavar='SERVICE',
+                               help='🔥 Search and auto-exploit from Exploit-DB (e.g., "Apache 2.4.49")')
+    advanced_group.add_argument('--reverse-shell', metavar='LHOST:LPORT',
+                               help='Generate reverse shell payloads (specify your listener IP:PORT)')
     advanced_group.add_argument('--privesc', action='store_true',
                                help='🔓 REAL privilege escalation scanner (finds SUID, sudo, kernel exploits)')
     advanced_group.add_argument('--privesc-exploit', metavar='VECTOR_ID',
@@ -355,7 +367,11 @@ Examples:
         args.opsec, args.opsec_footprint, args.opsec_sanitize,
         args.advanced_exploit, args.threat_intel, args.digital_footprint,
         args.risk_assessment, args.cvss4, args.apt_list, args.apt_simulate,
-        args.covert_channels, args.privesc, getattr(args, 'privesc_exploit', None)
+        args.covert_channels, args.privesc, getattr(args, 'privesc_exploit', None),
+        # Exploitation features
+        getattr(args, 'get_shell', None), getattr(args, 'ssh_brute', None),
+        getattr(args, 'web_exploit', None), getattr(args, 'exploit_db', None),
+        getattr(args, 'reverse_shell', None)
     ]):
         # Launch TUI if no specific command given
         tui = TUI(db_manager)
@@ -367,7 +383,11 @@ Examples:
         args.opsec, args.opsec_footprint, args.opsec_sanitize,
         args.advanced_exploit, args.threat_intel, args.digital_footprint,
         args.risk_assessment, args.cvss4, args.apt_list, args.apt_simulate,
-        args.covert_channels, args.privesc, getattr(args, 'privesc_exploit', None)
+        args.covert_channels, args.privesc, getattr(args, 'privesc_exploit', None),
+        # Exploitation features
+        getattr(args, 'get_shell', None), getattr(args, 'ssh_brute', None),
+        getattr(args, 'web_exploit', None), getattr(args, 'exploit_db', None),
+        getattr(args, 'reverse_shell', None)
     ]):
         # Handle CLI commands
         cli = CLI(db_manager, args)
