@@ -350,14 +350,24 @@ Examples:
     # Route to appropriate handler
     if args.mode == 'tui' and not any([
         args.mitre, args.cve, args.timeline, args.recon,
-        args.exfil_test, args.siem_parse, args.report, args.auto_scan
+        args.exfil_test, args.siem_parse, args.report, args.auto_scan,
+        # Advanced v2.0 features
+        args.opsec, args.opsec_footprint, args.opsec_sanitize,
+        args.advanced_exploit, args.threat_intel, args.digital_footprint,
+        args.risk_assessment, args.cvss4, args.apt_list, args.apt_simulate,
+        args.covert_channels, args.privesc, getattr(args, 'privesc_exploit', None)
     ]):
         # Launch TUI if no specific command given
         tui = TUI(db_manager)
         tui.run()
     elif args.mode == 'cli' or any([
         args.mitre, args.cve, args.timeline, args.recon,
-        args.exfil_test, args.siem_parse, args.report
+        args.exfil_test, args.siem_parse, args.report,
+        # Advanced v2.0 features
+        args.opsec, args.opsec_footprint, args.opsec_sanitize,
+        args.advanced_exploit, args.threat_intel, args.digital_footprint,
+        args.risk_assessment, args.cvss4, args.apt_list, args.apt_simulate,
+        args.covert_channels, args.privesc, getattr(args, 'privesc_exploit', None)
     ]):
         # Handle CLI commands
         cli = CLI(db_manager, args)
