@@ -248,16 +248,34 @@ Examples:
         install_dir = Path(__file__).parent.absolute()
         try:
             os.chdir(install_dir)
-            subprocess.run(['git', 'pull', 'origin', 'main'], check=True)
+            
+            # Clean untracked files that would conflict
+            print("[*] Cleaning conflicting files...")
+            subprocess.run(['git', 'clean', '-fd', 'config/mitre_attack*.json', 'data/schemas/*.json'], 
+                         shell=False, stderr=subprocess.DEVNULL)
+            
+            # Stash any local changes
+            print("[*] Stashing local changes...")
+            subprocess.run(['git', 'stash'], stderr=subprocess.DEVNULL)
+            
+            # Force pull
+            print("[*] Pulling latest changes...")
+            subprocess.run(['git', 'fetch', 'origin', 'main'], check=True)
+            subprocess.run(['git', 'reset', '--hard', 'origin/main'], check=True)
+            
+            # Update Python dependencies
             if (install_dir / 'venv').exists():
                 venv_python = install_dir / 'venv' / 'bin' / 'python'
                 if venv_python.exists():
+                    print("[*] Updating dependencies...")
                     subprocess.run([str(venv_python), '-m', 'pip', 'install', '-q', '--upgrade', 'pip'], check=True)
                     subprocess.run([str(venv_python), '-m', 'pip', 'install', '-q', '-r', 'requirements.txt'], check=True)
-            print("[✓] Update complete!")
+            
+            print("[✓] Update complete! Restart PUPMAS to use new features.")
             sys.exit(0)
         except subprocess.CalledProcessError as e:
             print(f"[!] Update failed: {e}")
+            print(f"[*] Try manual update: cd {install_dir} && git pull")
             sys.exit(1)
         except Exception as e:
             print(f"[!] Error: {e}")
