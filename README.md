@@ -98,9 +98,20 @@ PUPMAS (Puppeteer Master) is a comprehensive cybersecurity operations and intell
 
 ### Quick Install (One-Line)
 
+**Fastest way - just copy and paste:**
+
 ```bash
-# Fast installation with curl
-curl -fsSL https://raw.githubusercontent.com/dagdelenemre/pupmas/main/install.sh | bash
+# Install and run PUPMAS
+curl -sSL https://raw.githubusercontent.com/dagdelenemre/pupmas/main/install.sh | bash && python3 pupmas.py --mode tui
+```
+
+**With automatic updates included:**
+
+```bash
+# Install, update, and run
+curl -sSL https://raw.githubusercontent.com/dagdelenemre/pupmas/main/install.sh | bash && \
+curl -sSL https://raw.githubusercontent.com/dagdelenemre/pupmas/main/update.sh | bash && \
+python3 pupmas.py --mode tui
 ```
 
 ### Manual Install
@@ -124,7 +135,7 @@ python3 pupmas.py --help
 
 ```bash
 # Update from main branch
-curl -fsSL https://raw.githubusercontent.com/dagdelenemre/pupmas/main/update.sh | bash
+curl -sSL https://raw.githubusercontent.com/dagdelenemre/pupmas/main/update.sh | bash
 ```
 
 ### Requirements
