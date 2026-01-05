@@ -96,7 +96,14 @@ PUPMAS (Puppeteer Master) is a comprehensive cybersecurity operations and intell
 - Root/sudo access for certain operations
 - SQLAlchemy 2.0.45+ (for Python 3.13 compatibility)
 
-### Quick Install
+### Quick Install (One-Line)
+
+```bash
+# Fast installation with curl
+curl -fsSL https://raw.githubusercontent.com/dagdelenemre/pupmas/main/install.sh | bash
+```
+
+### Manual Install
 
 ```bash
 # Clone repository
@@ -111,6 +118,13 @@ pip3 install --upgrade sqlalchemy textual dnspython rich
 
 # Launch PUPMAS
 python3 pupmas.py --help
+```
+
+### Update PUPMAS
+
+```bash
+# Update from main branch
+curl -fsSL https://raw.githubusercontent.com/dagdelenemre/pupmas/main/update.sh | bash
 ```
 
 ### Requirements
