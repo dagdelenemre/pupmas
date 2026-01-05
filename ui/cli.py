@@ -20,6 +20,7 @@ from core.advanced_exploitation import AdvancedExploitationEngine
 from core.advanced_intelligence import AdvancedIntelligenceEngine
 from core.advanced_reporting import AdvancedReportingEngine
 from core.apt_simulator import APTSimulationEngine
+from core.privesc_engine import RealPrivescEngine
 from utils.db_manager import DatabaseManager
 from utils.helpers import print_success, print_error, print_info, print_warning
 
@@ -44,6 +45,7 @@ class CLI:
         self.threat_intel = AdvancedIntelligenceEngine()
         self.reporting = AdvancedReportingEngine()
         self.apt_sim = APTSimulationEngine()
+        self.privesc = RealPrivescEngine()
     
     def run(self):
         """Execute CLI command based on arguments"""
@@ -123,6 +125,10 @@ class CLI:
                 self.handle_apt_simulate()
             elif self.args.covert_channels:
                 self.handle_covert_channels()
+            elif self.args.privesc:
+                self.handle_real_privesc()
+            elif self.args.privesc_exploit:
+                self.handle_privesc_exploit()
             
             else:
                 self.console.print("[yellow]No command specified. Use --help for usage.[/yellow]")
@@ -917,4 +923,115 @@ Generated: {self.siem._generate_normal_logs.__globals__['datetime'].now().isofor
         
         self.console.print(table)
         print_success(f"Generated {len(channels)} covert channels")
+    
+    def handle_real_privesc(self):
+        """Handle REAL privilege escalation scanning"""
+        print_warning("⚠️  SCANNING FOR PRIVILEGE ESCALATION VECTORS")
+        print_warning("This will scan for REAL exploitable vulnerabilities!")
+        
+        print_info(f"Current user: {self.privesc.current_user}")
+        print_info(f"Root access: {'YES' if self.privesc.is_root else 'NO'}")
+        
+        if self.privesc.is_root:
+            print_success("Already running as root!")
+            return
+        
+        print_info("\n🔍 Scanning all vectors...")
+        vectors = self.privesc.scan_all_vectors()
+        
+        if not vectors:
+            print_warning("No privilege escalation vectors found")
+            return
+        
+        # Group by severity
+        critical = [v for v in vectors if v.severity == "CRITICAL"]
+        high = [v for v in vectors if v.severity == "HIGH"]
+        
+        print_success(f"\n✅ Found {len(vectors)} vectors: {len(critical)} CRITICAL, {len(high)} HIGH")
+        
+        # Display critical vectors
+        if critical:
+            table = Table(title="🔴 CRITICAL Privilege Escalation Vectors")
+            table.add_column("ID", style="red", width=5)
+            table.add_column("Vector", style="cyan", width=30)
+            table.add_column("Success Rate", style="yellow", width=15)
+            table.add_column("Description", style="white", width=40)
+            
+            for i, vec in enumerate(critical, 1):
+                table.add_row(
+                    str(i),
+                    vec.name,
+                    f"{vec.success_rate:.0%}",
+                    vec.description[:40]
+                )
+            
+            self.console.print(table)
+        
+        # Display high vectors
+        if high:
+            table = Table(title="🟠 HIGH Privilege Escalation Vectors")
+            table.add_column("ID", style="yellow", width=5)
+            table.add_column("Vector", style="cyan", width=30)
+            table.add_column("Success Rate", style="yellow", width=15)
+            table.add_column("Command Preview", style="white", width=40)
+            
+            for i, vec in enumerate(high, len(critical) + 1):
+                table.add_row(
+                    str(i),
+                    vec.name,
+                    f"{vec.success_rate:.0%}",
+                    vec.command[:40] + "..."
+                )
+            
+            self.console.print(table)
+        
+        # Show example exploitation
+        if vectors:
+            print_info("\n💡 To exploit a vector:")
+            print_info(f"   pupmas --privesc-exploit 1")
+            print_info(f"\n💡 To see full command:")
+            self.console.print(f"\n[bold cyan]Example - {vectors[0].name}:[/bold cyan]")
+            self.console.print(f"[dim]{vectors[0].command}[/dim]")
+    
+    def handle_privesc_exploit(self):
+        """Exploit a privilege escalation vector"""
+        vector_id = int(self.args.privesc_exploit)
+        
+        print_warning("⚠️⚠️⚠️  EXPLOITATION MODE  ⚠️⚠️⚠️")
+        print_warning("This will ATTEMPT TO EXPLOIT a real vulnerability!")
+        print_warning("Use ONLY on systems you have permission to test!")
+        
+        # Scan first
+        print_info("\n🔍 Scanning vectors...")
+        vectors = self.privesc.scan_all_vectors()
+        
+        if vector_id < 1 or vector_id > len(vectors):
+            print_error(f"Invalid vector ID. Found {len(vectors)} vectors.")
+            return
+        
+        target_vector = vectors[vector_id - 1]
+        
+        print_info(f"\n🎯 Target: {target_vector.name}")
+        print_info(f"   Severity: {target_vector.severity}")
+        print_info(f"   Success Rate: {target_vector.success_rate:.0%}")
+        print_info(f"\n📜 Command to execute:")
+        self.console.print(f"[yellow]{target_vector.command}[/yellow]")
+        
+        # Confirmation
+        response = input("\n⚠️  Execute this exploit? [y/N]: ").strip().lower()
+        
+        if response != 'y':
+            print_info("Exploit cancelled")
+            return
+        
+        print_info("\n🚀 Executing exploit...")
+        result = self.privesc.exploit_vector(target_vector)
+        
+        if result['success']:
+            print_success("✅ EXPLOIT SUCCESSFUL!")
+            print_success(f"Output:\n{result['output']}")
+        else:
+            print_error("❌ Exploit failed")
+            print_error(f"Error: {result['error']}")
+
 

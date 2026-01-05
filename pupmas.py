@@ -145,7 +145,9 @@ Examples:
     advanced_group.add_argument('--exploit-chain', action='store_true',
                                help='Generate multi-stage exploit chain')
     advanced_group.add_argument('--privesc', action='store_true',
-                               help='Analyze privilege escalation paths')
+                               help='🔓 REAL privilege escalation scanner (finds SUID, sudo, kernel exploits)')
+    advanced_group.add_argument('--privesc-exploit', metavar='VECTOR_ID',
+                               help='⚠️ EXPLOIT a privilege escalation vector (DANGEROUS!)')
     advanced_group.add_argument('--threat-intel', metavar='DOMAIN',
                                help='Advanced threat intelligence gathering')
     advanced_group.add_argument('--digital-footprint', metavar='ORG',
