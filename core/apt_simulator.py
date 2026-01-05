@@ -103,6 +103,108 @@ class APTSimulationEngine:
         self.attack_queue = queue.Queue()
         self.simulation_running = False
         self.event_log = []
+    
+    def list_apt_profiles(self) -> List[Dict]:
+        """List available APT threat actor profiles"""
+        profiles = [
+            {'name': 'APT28 (Fancy Bear)', 'origin': 'Russia', 'first_seen': '2004', 'last_seen': '2024', 'sophistication': 'high', 'primary_motivation': 'espionage'},
+            {'name': 'APT29 (Cozy Bear)', 'origin': 'Russia', 'first_seen': '2008', 'last_seen': '2024', 'sophistication': 'high', 'primary_motivation': 'intelligence'},
+            {'name': 'APT1 (Comment Crew)', 'origin': 'China', 'first_seen': '2006', 'last_seen': '2023', 'sophistication': 'medium', 'primary_motivation': 'espionage'},
+            {'name': 'APT3 (Gothic Panda)', 'origin': 'China', 'first_seen': '2010', 'last_seen': '2024', 'sophistication': 'high', 'primary_motivation': 'espionage'},
+            {'name': 'APT10 (MenuPass)', 'origin': 'China', 'first_seen': '2009', 'last_seen': '2024', 'sophistication': 'high', 'primary_motivation': 'espionage'},
+            {'name': 'APT33 (Elfin)', 'origin': 'Iran', 'first_seen': '2013', 'last_seen': '2024', 'sophistication': 'medium', 'primary_motivation': 'destruction'},
+            {'name': 'APT34 (OilRig)', 'origin': 'Iran', 'first_seen': '2014', 'last_seen': '2024', 'sophistication': 'medium', 'primary_motivation': 'espionage'},
+            {'name': 'APT37 (Reaper)', 'origin': 'North Korea', 'first_seen': '2012', 'last_seen': '2024', 'sophistication': 'medium', 'primary_motivation': 'espionage'},
+            {'name': 'APT38 (Lazarus)', 'origin': 'North Korea', 'first_seen': '2014', 'last_seen': '2024', 'sophistication': 'high', 'primary_motivation': 'financial'},
+            {'name': 'APT39 (Chafer)', 'origin': 'Iran', 'first_seen': '2014', 'last_seen': '2023', 'sophistication': 'medium', 'primary_motivation': 'espionage'},
+            {'name': 'APT40 (Leviathan)', 'origin': 'China', 'first_seen': '2013', 'last_seen': '2024', 'sophistication': 'medium', 'primary_motivation': 'espionage'},
+            {'name': 'APT41 (Winnti)', 'origin': 'China', 'first_seen': '2012', 'last_seen': '2024', 'sophistication': 'high', 'primary_motivation': 'espionage/financial'},
+            {'name': 'Turla (Snake)', 'origin': 'Russia', 'first_seen': '1996', 'last_seen': '2024', 'sophistication': 'very high', 'primary_motivation': 'espionage'},
+            {'name': 'Equation Group', 'origin': 'USA', 'first_seen': '2001', 'last_seen': '2017', 'sophistication': 'very high', 'primary_motivation': 'intelligence'},
+            {'name': 'Sandworm', 'origin': 'Russia', 'first_seen': '2014', 'last_seen': '2024', 'sophistication': 'high', 'primary_motivation': 'destruction'},
+        ]
+        return profiles
+    
+    async def create_campaign(self, profile: Dict, target_profile: Dict) -> APTCampaign:
+        """Create APT campaign based on profile"""
+        campaign_id = str(uuid.uuid4())[:8]
+        
+        campaign = APTCampaign(
+            campaign_id=campaign_id,
+            campaign_name=f"Operation {profile['name']} - {target_profile.get('industry', 'Target')}",
+            threat_actor=profile['name'],
+            target_organization=target_profile.get('organization', 'Unknown'),
+            target_industry=target_profile.get('industry', 'Technology'),
+            objectives=['Initial Access', 'Persistence', 'Credential Access', 'Data Exfiltration'],
+            start_stage=APTStage.RECONNAISSANCE,
+            current_stage=APTStage.RECONNAISSANCE
+        )
+        
+        # Generate campaign phases
+        campaign.stages = {
+            'reconnaissance': {'duration_days': 7, 'objectives': ['Identify targets', 'Map infrastructure']},
+            'initial_access': {'duration_days': 3, 'objectives': ['Spearphishing', 'Exploit public services']},
+            'persistence': {'duration_days': 2, 'objectives': ['Install backdoor', 'Create scheduled tasks']},
+            'privilege_escalation': {'duration_days': 1, 'objectives': ['Exploit local vulnerabilities', 'Token manipulation']},
+            'lateral_movement': {'duration_days': 5, 'objectives': ['Compromise additional hosts', 'Access domain controller']},
+            'exfiltration': {'duration_days': 3, 'objectives': ['Collect sensitive data', 'Exfiltrate via C2']},
+        }
+        
+        # Generate phase objects with proper structure
+        campaign.duration_days = sum(stage['duration_days'] for stage in campaign.stages.values())
+        
+        phases = []
+        start_day = 0
+        for stage_name, stage_data in campaign.stages.items():
+            end_day = start_day + stage_data['duration_days']
+            phase = type('CampaignPhase', (), {
+                'name': stage_name.replace('_', ' ').title(),
+                'start_day': start_day,
+                'end_day': end_day,
+                'ttps': [f"TTP-{i}" for i in range(1, 4)],
+                'objectives': stage_data['objectives'],
+                'duration': stage_data['duration_days']
+            })()
+            phases.append(phase)
+            start_day = end_day
+        
+        campaign.phases = phases
+        
+        self.campaigns[campaign_id] = campaign
+        return campaign
+    
+    def generate_covert_channels(self) -> List['CovertChannelResult']:
+        """Generate covert communication channel configurations"""
+        channels = [
+            {'name': 'DNS Tunneling', 'stealth_rating': 'high', 'bandwidth': 'low (1-10 Kbps)', 'detection_difficulty': 'hard', 
+             'implementation_details': 'Encode data in DNS queries (TXT/CNAME records)'},
+            {'name': 'HTTPS Certificate Smuggling', 'stealth_rating': 'very high', 'bandwidth': 'medium (100 Kbps)', 'detection_difficulty': 'very hard',
+             'implementation_details': 'Embed data in SSL/TLS certificate extensions'},
+            {'name': 'ICMP Echo Data', 'stealth_rating': 'medium', 'bandwidth': 'low (5 Kbps)', 'detection_difficulty': 'medium',
+             'implementation_details': 'Hide data in ICMP echo request/reply packets'},
+            {'name': 'HTTP Header Steganography', 'stealth_rating': 'high', 'bandwidth': 'medium (50 Kbps)', 'detection_difficulty': 'hard',
+             'implementation_details': 'Encode data in custom HTTP headers (User-Agent, Cookie)'},
+            {'name': 'Cloud Storage C2', 'stealth_rating': 'very high', 'bandwidth': 'high (1 Mbps)', 'detection_difficulty': 'very hard',
+             'implementation_details': 'Use legitimate cloud services (Google Drive, OneDrive) as dead drop'},
+            {'name': 'Twitter/Social Media C2', 'stealth_rating': 'very high', 'bandwidth': 'low (10 Kbps)', 'detection_difficulty': 'extremely hard',
+             'implementation_details': 'Commands hidden in social media posts/hashtags'},
+            {'name': 'Email Exfiltration', 'stealth_rating': 'high', 'bandwidth': 'medium (100 Kbps)', 'detection_difficulty': 'medium',
+             'implementation_details': 'Attach data to legitimate-looking emails'},
+            {'name': 'IPv6 Covert Channel', 'stealth_rating': 'very high', 'bandwidth': 'high (500 Kbps)', 'detection_difficulty': 'very hard',
+             'implementation_details': 'Embed data in IPv6 extension headers'},
+            {'name': 'NTP Timing Channel', 'stealth_rating': 'extremely high', 'bandwidth': 'very low (1 Kbps)', 'detection_difficulty': 'extremely hard',
+             'implementation_details': 'Encode data in NTP packet timing variations'},
+            {'name': 'Blockchain C2', 'stealth_rating': 'extremely high', 'bandwidth': 'low (5 Kbps)', 'detection_difficulty': 'extremely hard',
+             'implementation_details': 'Embed commands in blockchain transactions/smart contracts'},
+        ]
+        
+        # Convert to result objects
+        results = []
+        for ch in channels:
+            result = type('CovertChannelResult', (), ch)()
+            results.append(result)
+        
+        return results
         
     def _initialize_ttp_library(self) -> Dict[str, TTPMapping]:
         """Initialize MITRE ATT&CK TTP library"""

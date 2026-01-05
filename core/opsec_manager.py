@@ -71,7 +71,69 @@ class OPSECManager:
         self.memory_pool = []
         self.network_obfuscation = False
         self.log_sanitization_active = False
+    
+    def get_anti_forensics_techniques(self) -> List[Dict]:
+        """Get available anti-forensics techniques"""
+        techniques = [
+            {'name': 'Log File Wiping', 'category': 'evidence_removal', 'effectiveness': 'high', 'risk_level': 'high', 
+             'description': 'Clear system logs (/var/log/*, Event Viewer)'},
+            {'name': 'Timestamp Manipulation', 'category': 'timestomping', 'effectiveness': 'medium', 'risk_level': 'medium',
+             'description': 'Modify file creation/modification timestamps'},
+            {'name': 'Memory Scrubbing', 'category': 'memory_forensics', 'effectiveness': 'high', 'risk_level': 'low',
+             'description': 'Overwrite sensitive data in memory'},
+            {'name': 'Process Injection', 'category': 'hiding', 'effectiveness': 'very high', 'risk_level': 'medium',
+             'description': 'Hide malicious code in legitimate processes'},
+            {'name': 'Rootkit Installation', 'category': 'hiding', 'effectiveness': 'very high', 'risk_level': 'very high',
+             'description': 'Kernel-level hiding of files/processes/network'},
+            {'name': 'Secure Delete (Shred)', 'category': 'evidence_removal', 'effectiveness': 'very high', 'risk_level': 'low',
+             'description': 'Overwrite files multiple times before deletion'},
+            {'name': 'Anti-Debugging', 'category': 'analysis_prevention', 'effectiveness': 'high', 'risk_level': 'low',
+             'description': 'Detect and evade debuggers/sandboxes'},
+            {'name': 'Encrypted Communications', 'category': 'network_hiding', 'effectiveness': 'very high', 'risk_level': 'low',
+             'description': 'Encrypt C2 traffic (SSL/TLS, custom crypto)'},
+            {'name': 'Registry Cleanup', 'category': 'evidence_removal', 'effectiveness': 'medium', 'risk_level': 'medium',
+             'description': 'Remove registry keys/values (Windows)'},
+            {'name': 'Prefetch Clearing', 'category': 'evidence_removal', 'effectiveness': 'medium', 'risk_level': 'medium',
+             'description': 'Clear Windows prefetch files'},
+        ]
+        return techniques
+    
+    def analyze_footprint(self) -> Dict:
+        """Analyze current attack footprint"""
+        import random
         
+        # Simulate footprint analysis
+        log_entries = random.randint(50, 500)
+        network_connections = random.randint(10, 100)
+        file_modifications = random.randint(5, 50)
+        process_creations = random.randint(3, 30)
+        
+        # Calculate risk
+        risk_score = (log_entries / 100) + (network_connections / 50) + (file_modifications / 10)
+        detection_probability = min(1.0, risk_score / 20)
+        
+        return {
+            'log_entries': log_entries,
+            'network_connections': network_connections,
+            'file_modifications': file_modifications,
+            'process_creations': process_creations,
+            'risk_score': risk_score,
+            'detection_probability': detection_probability,
+            'timestamp': datetime.now().isoformat()
+        }
+    
+    def generate_opsec_recommendations(self) -> List[Dict]:
+        """Generate OPSEC recommendations"""
+        recommendations = [
+            {'priority': 'CRITICAL', 'recommendation': 'Clear authentication logs immediately', 'category': 'logs'},
+            {'priority': 'HIGH', 'recommendation': 'Sanitize command history files', 'category': 'evidence'},
+            {'priority': 'HIGH', 'recommendation': 'Remove network connection artifacts', 'category': 'network'},
+            {'priority': 'MEDIUM', 'recommendation': 'Scrub memory for credentials', 'category': 'memory'},
+            {'priority': 'MEDIUM', 'recommendation': 'Randomize network request timing', 'category': 'timing'},
+            {'priority': 'LOW', 'recommendation': 'Use rotating user agents', 'category': 'fingerprint'},
+        ]
+        return recommendations
+    
     def _generate_session_id(self) -> str:
         """Generate cryptographically secure session ID"""
         return secrets.token_hex(32)
