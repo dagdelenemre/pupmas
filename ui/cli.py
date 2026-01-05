@@ -15,6 +15,11 @@ from core.cve_handler import CVEHandler
 from core.attack_schemas import AttackSchemaEngine
 from core.timeline_manager import TimelineManager
 from core.siem_handler import SIEMHandler
+from core.opsec_manager import OPSECManager, ThreatLevel
+from core.advanced_exploitation import AdvancedExploitationEngine
+from core.advanced_intelligence import AdvancedIntelligenceEngine
+from core.advanced_reporting import AdvancedReportingEngine
+from core.apt_simulator import APTSimulationEngine
 from utils.db_manager import DatabaseManager
 from utils.helpers import print_success, print_error, print_info, print_warning
 
@@ -34,6 +39,11 @@ class CLI:
         self.attack_schema = AttackSchemaEngine()
         self.timeline = TimelineManager()
         self.siem = SIEMHandler()
+        self.opsec = OPSECManager()
+        self.advanced_exploit = AdvancedExploitationEngine()
+        self.threat_intel = AdvancedIntelligenceEngine()
+        self.reporting = AdvancedReportingEngine()
+        self.apt_sim = APTSimulationEngine()
     
     def run(self):
         """Execute CLI command based on arguments"""
@@ -91,6 +101,28 @@ class CLI:
             # Reporting
             elif self.args.report:
                 self.handle_generate_report()
+            
+            # Advanced v2.0 Features
+            elif self.args.opsec or self.args.opsec_footprint:
+                self.handle_opsec()
+            elif self.args.opsec_sanitize:
+                self.handle_opsec_sanitize()
+            elif self.args.advanced_exploit:
+                self.handle_advanced_exploit()
+            elif self.args.threat_intel:
+                self.handle_threat_intel()
+            elif self.args.digital_footprint:
+                self.handle_digital_footprint()
+            elif self.args.risk_assessment:
+                self.handle_risk_assessment()
+            elif self.args.cvss4:
+                self.handle_cvss4()
+            elif self.args.apt_list:
+                self.handle_apt_list()
+            elif self.args.apt_simulate:
+                self.handle_apt_simulate()
+            elif self.args.covert_channels:
+                self.handle_covert_channels()
             
             else:
                 self.console.print("[yellow]No command specified. Use --help for usage.[/yellow]")
@@ -559,3 +591,330 @@ Generated: {self.siem._generate_normal_logs.__globals__['datetime'].now().isofor
             'NONE': 'white'
         }
         return colors.get(severity.upper(), 'white')
+    
+    # ============================================
+    # Advanced Features v2.0 - Senior Expert Level
+    # ============================================
+    
+    def handle_opsec(self):
+        """Handle OPSEC operations"""
+        print_info("🔒 OPSEC Manager - Operational Security Analysis")
+        
+        if self.args.opsec_footprint:
+            footprint = self.opsec.analyze_footprint()
+            
+            table = Table(title="Attack Footprint Analysis")
+            table.add_column("Metric", style="cyan")
+            table.add_column("Value", style="white")
+            
+            table.add_row("Log Entries", str(footprint['log_entries']))
+            table.add_row("Network Connections", str(footprint['network_connections']))
+            table.add_row("File Modifications", str(footprint['file_modifications']))
+            table.add_row("Process Creations", str(footprint['process_creations']))
+            table.add_row("Risk Score", f"{footprint['risk_score']:.2f}")
+            table.add_row("Detection Probability", f"{footprint['detection_probability']:.1%}")
+            
+            self.console.print(table)
+            
+            recommendations = self.opsec.generate_opsec_recommendations()
+            if recommendations:
+                self.console.print("\n[bold cyan]Recommendations:[/bold cyan]")
+                for rec in recommendations[:5]:
+                    self.console.print(f"  • {rec['recommendation']} (Priority: {rec['priority']})")
+        else:
+            techniques = self.opsec.get_anti_forensics_techniques()
+            
+            table = Table(title="Anti-Forensics Techniques")
+            table.add_column("Technique", style="cyan", width=30)
+            table.add_column("Category", style="yellow", width=15)
+            table.add_column("Effectiveness", style="green", width=15)
+            table.add_column("Risk", style="white", width=10)
+            
+            for tech in techniques[:10]:
+                table.add_row(
+                    tech['name'],
+                    tech['category'],
+                    tech['effectiveness'],
+                    tech['risk_level']
+                )
+            
+            self.console.print(table)
+        
+        print_success("OPSEC analysis complete")
+    
+    def handle_opsec_sanitize(self):
+        """Sanitize logs for OPSEC"""
+        log_file = self.args.opsec_sanitize
+        print_info(f"🧹 Sanitizing logs: {log_file}")
+        
+        if self.opsec.sanitize_logs(log_file):
+            print_success(f"Logs sanitized successfully")
+        else:
+            print_error("Failed to sanitize logs")
+    
+    def handle_advanced_exploit(self):
+        """Handle advanced exploitation"""
+        import asyncio
+        target_str = self.args.advanced_exploit
+        
+        print_info(f"⚡ Advanced Exploitation Engine")
+        print_info(f"Target: {target_str}")
+        
+        # Parse target
+        parts = target_str.split(':')
+        host = parts[0]
+        
+        target = {
+            'host': host,
+            'os': 'unknown',
+            'services': [],
+            'vulnerabilities': []
+        }
+        
+        async def run_exploit():
+            chain = await self.advanced_exploit.generate_exploit_chain(target)
+            
+            table = Table(title="Exploit Chain Generated")
+            table.add_column("Stage", style="cyan")
+            table.add_column("Technique", style="yellow")
+            table.add_column("Probability", style="green")
+            table.add_column("Risk", style="red")
+            
+            for i, stage in enumerate(chain.stages, 1):
+                table.add_row(
+                    f"Stage {i}",
+                    stage.technique,
+                    f"{stage.success_probability:.1%}",
+                    str(stage.risk_score)
+                )
+            
+            self.console.print(table)
+            print_info(f"Overall success probability: {chain.success_probability:.1%}")
+        
+        asyncio.run(run_exploit())
+        print_success("Exploit chain analysis complete")
+    
+    def handle_threat_intel(self):
+        """Handle threat intelligence gathering"""
+        import asyncio
+        domain = self.args.threat_intel
+        
+        print_info(f"🔍 Threat Intelligence Gathering")
+        print_info(f"Target: {domain}")
+        
+        target = {
+            'target_id': f"TGT-{domain}",
+            'domain': domain,
+            'organization': domain
+        }
+        
+        async def gather_intel():
+            footprint = await self.threat_intel.gather_digital_footprint(target)
+            
+            table = Table(title="Digital Footprint")
+            table.add_column("Metric", style="cyan")
+            table.add_column("Count", style="white")
+            
+            table.add_row("Domains", str(len(footprint.domains)))
+            table.add_row("IP Addresses", str(len(footprint.ip_addresses)))
+            table.add_row("Email Patterns", str(len(footprint.email_patterns)))
+            table.add_row("Social Media", str(len(footprint.social_media_accounts)))
+            table.add_row("Technologies", str(len(footprint.technologies)))
+            
+            self.console.print(table)
+            
+            if footprint.technologies:
+                self.console.print(f"\n[bold cyan]Technologies:[/bold cyan]")
+                self.console.print(f"  {', '.join(footprint.technologies[:10])}")
+        
+        asyncio.run(gather_intel())
+        print_success("Intelligence gathering complete")
+    
+    def handle_digital_footprint(self):
+        """Handle digital footprint analysis"""
+        import asyncio
+        org = self.args.digital_footprint
+        
+        print_info(f"👣 Digital Footprint Analysis")
+        print_info(f"Organization: {org}")
+        
+        target = {
+            'target_id': f"ORG-{org}",
+            'organization': org,
+            'domain': org.lower().replace(' ', '') + '.com'
+        }
+        
+        async def analyze():
+            footprint = await self.threat_intel.gather_digital_footprint(target)
+            
+            self.console.print(f"\n[bold cyan]Digital Footprint for {org}:[/bold cyan]")
+            self.console.print(f"  Domains: {len(footprint.domains)}")
+            self.console.print(f"  IPs: {len(footprint.ip_addresses)}")
+            self.console.print(f"  Emails: {len(footprint.email_patterns)}")
+            self.console.print(f"  Social: {len(footprint.social_media_accounts)}")
+            
+            if footprint.domains:
+                self.console.print(f"\n[bold yellow]Discovered Domains:[/bold yellow]")
+                for domain in footprint.domains[:5]:
+                    self.console.print(f"  • {domain}")
+        
+        asyncio.run(analyze())
+        print_success("Footprint analysis complete")
+    
+    def handle_risk_assessment(self):
+        """Handle risk assessment"""
+        target = self.args.risk_assessment
+        
+        print_info(f"📈 Risk Assessment")
+        print_info(f"Target: {target}")
+        
+        # Mock data for demonstration
+        findings = {
+            'critical_vulns': 2,
+            'high_vulns': 5,
+            'medium_vulns': 12,
+            'low_vulns': 18
+        }
+        
+        assessment = self.reporting.perform_risk_assessment(target, findings)
+        
+        table = Table(title="Risk Assessment Results")
+        table.add_column("Metric", style="cyan")
+        table.add_column("Value", style="white")
+        
+        table.add_row("Target", assessment.target_name)
+        table.add_row("Overall Risk Score", f"{assessment.overall_risk_score:.1f}/10")
+        table.add_row("Risk Level", assessment.risk_level)
+        table.add_row("Critical Findings", str(assessment.critical_findings))
+        
+        self.console.print(table)
+        
+        if assessment.recommendations:
+            self.console.print(f"\n[bold cyan]Top Recommendations:[/bold cyan]")
+            for rec in assessment.recommendations[:5]:
+                self.console.print(f"  • {rec['action']} (Priority: {rec['priority']})")
+        
+        print_success("Risk assessment complete")
+    
+    def handle_cvss4(self):
+        """Handle CVSS v4.0 scoring"""
+        cve_id = self.args.cvss4
+        
+        print_info(f"📊 CVSS v4.0 Scoring")
+        print_info(f"CVE: {cve_id}")
+        
+        # Example scoring
+        cvss = self.reporting.calculate_cvss_v4(
+            vulnerability_id=cve_id,
+            attack_vector="network",
+            attack_complexity="low",
+            privileges_required="none",
+            user_interaction="none",
+            confidentiality_impact="high",
+            integrity_impact="high",
+            availability_impact="high"
+        )
+        
+        table = Table(title=f"CVSS v4.0 Score for {cve_id}")
+        table.add_column("Metric", style="cyan")
+        table.add_column("Value", style="white")
+        
+        table.add_row("Base Score", f"{cvss.base_score:.1f}")
+        table.add_row("Severity", cvss.severity)
+        table.add_row("Exploitability", f"{cvss.exploitability_score:.1f}")
+        table.add_row("Impact", f"{cvss.impact_score:.1f}")
+        table.add_row("Vector", cvss.vector_string)
+        
+        self.console.print(table)
+        print_success("CVSS scoring complete")
+    
+    def handle_apt_list(self):
+        """List APT profiles"""
+        print_info("🎭 Available APT Profiles")
+        
+        profiles = self.apt_sim.list_apt_profiles()
+        
+        table = Table(title="APT Profiles Database")
+        table.add_column("Name", style="cyan", width=20)
+        table.add_column("Origin", style="yellow", width=15)
+        table.add_column("Active Period", style="white", width=20)
+        table.add_column("Sophistication", style="red", width=15)
+        
+        for profile in profiles[:15]:
+            table.add_row(
+                profile['name'],
+                profile['origin'],
+                f"{profile['first_seen']} - {profile['last_seen']}",
+                profile['sophistication']
+            )
+        
+        self.console.print(table)
+        self.console.print(f"\n[dim]Total: {len(profiles)} APT profiles available[/dim]")
+        print_success(f"Listed {len(profiles)} APT profiles")
+    
+    def handle_apt_simulate(self):
+        """Simulate APT campaign"""
+        import asyncio
+        profile_name = self.args.apt_simulate
+        
+        print_info(f"🚀 APT Campaign Simulation")
+        print_info(f"Profile: {profile_name}")
+        
+        profile = {
+            'name': profile_name,
+            'sophistication': 'high',
+            'primary_motivation': 'espionage'
+        }
+        
+        target_profile = {
+            'industry': 'technology',
+            'size': 'enterprise',
+            'security_maturity': 'medium'
+        }
+        
+        async def simulate():
+            campaign = await self.apt_sim.create_campaign(profile, target_profile)
+            
+            table = Table(title="APT Campaign Generated")
+            table.add_column("Phase", style="cyan")
+            table.add_column("Duration", style="yellow")
+            table.add_column("TTPs", style="green")
+            table.add_column("Objectives", style="white")
+            
+            for i, phase in enumerate(campaign.phases, 1):
+                table.add_row(
+                    phase.name,
+                    f"Day {phase.start_day}-{phase.end_day}",
+                    str(len(phase.ttps)),
+                    ', '.join(phase.objectives[:2])
+                )
+            
+            self.console.print(table)
+            print_info(f"Campaign duration: {campaign.duration_days} days")
+        
+        asyncio.run(simulate())
+        print_success("APT simulation complete")
+    
+    def handle_covert_channels(self):
+        """Generate covert communication channels"""
+        print_info("🔐 Covert Communication Channels")
+        
+        channels = self.apt_sim.generate_covert_channels()
+        
+        table = Table(title="Available Covert Channels")
+        table.add_column("Channel", style="cyan", width=25)
+        table.add_column("Stealth", style="yellow", width=10)
+        table.add_column("Bandwidth", style="green", width=15)
+        table.add_column("Detection Difficulty", style="red", width=20)
+        
+        for channel in channels[:10]:
+            table.add_row(
+                channel.name,
+                channel.stealth_rating,
+                channel.bandwidth,
+                channel.detection_difficulty
+            )
+        
+        self.console.print(table)
+        print_success(f"Generated {len(channels)} covert channels")
+

@@ -7,10 +7,10 @@ Test script for all 5 new advanced modules
 import asyncio
 from datetime import datetime
 from core.opsec_manager import OPSECManager, ThreatLevel
-from core.advanced_exploitation import AdvancedExploitationEngine, ExploitTarget
-from core.advanced_intelligence import AdvancedIntelligenceEngine, IntelligenceTarget
+from core.advanced_exploitation import AdvancedExploitationEngine
+from core.advanced_intelligence import AdvancedIntelligenceEngine
 from core.advanced_reporting import AdvancedReportingEngine
-from core.apt_simulator import APTSimulationEngine, APTProfile
+from core.apt_simulator import APTSimulationEngine
 
 
 def print_section(title: str):
@@ -70,18 +70,18 @@ async def test_advanced_exploitation():
     
     engine = AdvancedExploitationEngine()
     
-    # Create target
-    target = ExploitTarget(
-        host="192.168.1.100",
-        os="linux",
-        version="Ubuntu 20.04",
-        services=["ssh", "http", "mysql"],
-        vulnerabilities=["CVE-2021-3156", "CVE-2021-44228"]
-    )
+    # Create target dict
+    target = {
+        'host': '192.168.1.100',
+        'os': 'linux',
+        'version': 'Ubuntu 20.04',
+        'services': ['ssh', 'http', 'mysql'],
+        'vulnerabilities': ['CVE-2021-3156', 'CVE-2021-44228']
+    }
     
-    print(f"🎯 Target: {target.host} ({target.os} {target.version})")
-    print(f"   Services: {', '.join(target.services)}")
-    print(f"   Vulnerabilities: {', '.join(target.vulnerabilities)}")
+    print(f"🎯 Target: {target['host']} ({target['os']} {target['version']})")
+    print(f"   Services: {', '.join(target['services'])}")
+    print(f"   Vulnerabilities: {', '.join(target['vulnerabilities'])}")
     
     # Generate exploit chain
     print("\n⚡ Generating multi-stage exploit chain...")
@@ -121,15 +121,15 @@ async def test_advanced_intelligence():
     
     intel = AdvancedIntelligenceEngine()
     
-    # Create target
-    target = IntelligenceTarget(
-        target_id="DEMO-001",
-        domain="example.com",
-        organization="Example Corp"
-    )
+    # Create target dict
+    target = {
+        'target_id': 'DEMO-001',
+        'domain': 'example.com',
+        'organization': 'Example Corp'
+    }
     
-    print(f"🔍 Target: {target.organization}")
-    print(f"   Domain: {target.domain}")
+    print(f"🔍 Target: {target['organization']}")
+    print(f"   Domain: {target['domain']}")
     
     # Digital footprint
     print("\n👣 Gathering digital footprint...")
@@ -142,7 +142,7 @@ async def test_advanced_intelligence():
     
     # DNS intelligence
     print("\n🌐 DNS intelligence gathering...")
-    dns_intel = await intel.perform_dns_intelligence(target.domain)
+    dns_intel = await intel.perform_dns_intelligence(target['domain'])
     print(f"   A records: {len(dns_intel['a_records'])}")
     print(f"   MX records: {len(dns_intel['mx_records'])}")
     print(f"   Name servers: {len(dns_intel['name_servers'])}")
@@ -264,11 +264,11 @@ async def test_apt_simulator():
     
     # Create campaign
     print("🚀 Creating APT campaign...")
-    profile = APTProfile(
-        name="APT-DEMO",
-        sophistication="high",
-        primary_motivation="espionage"
-    )
+    profile = {
+        'name': 'APT-DEMO',
+        'sophistication': 'high',
+        'primary_motivation': 'espionage'
+    }
     
     campaign = await apt.create_campaign(
         profile=profile,

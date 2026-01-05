@@ -132,6 +132,39 @@ Examples:
     report_group.add_argument('--output', metavar='FILE',
                              help='Output file path')
     
+    # Advanced Features v2.0 - Senior Expert Level
+    advanced_group = parser.add_argument_group('🔥 Advanced Features (v2.0 Senior Expert)')
+    advanced_group.add_argument('--opsec', action='store_true',
+                               help='OPSEC Manager: Operational security & anti-forensics')
+    advanced_group.add_argument('--opsec-footprint', action='store_true',
+                               help='Analyze current attack footprint')
+    advanced_group.add_argument('--opsec-sanitize', metavar='LOG_FILE',
+                               help='Sanitize logs for OPSEC')
+    advanced_group.add_argument('--advanced-exploit', metavar='TARGET',
+                               help='Advanced exploitation engine (format: IP:PORT)')
+    advanced_group.add_argument('--exploit-chain', action='store_true',
+                               help='Generate multi-stage exploit chain')
+    advanced_group.add_argument('--privesc', action='store_true',
+                               help='Analyze privilege escalation paths')
+    advanced_group.add_argument('--threat-intel', metavar='DOMAIN',
+                               help='Advanced threat intelligence gathering')
+    advanced_group.add_argument('--digital-footprint', metavar='ORG',
+                               help='Gather digital footprint for organization')
+    advanced_group.add_argument('--dark-web', metavar='TARGET',
+                               help='Monitor dark web for target mentions')
+    advanced_group.add_argument('--risk-assessment', metavar='TARGET',
+                               help='Comprehensive risk assessment')
+    advanced_group.add_argument('--cvss4', metavar='CVE_ID',
+                               help='Calculate CVSS v4.0 score')
+    advanced_group.add_argument('--apt-simulate', metavar='PROFILE',
+                               help='APT campaign simulation (e.g., APT28, APT29)')
+    advanced_group.add_argument('--apt-list', action='store_true',
+                               help='List available APT profiles')
+    advanced_group.add_argument('--c2-setup', action='store_true',
+                               help='Setup C2 infrastructure')
+    advanced_group.add_argument('--covert-channels', action='store_true',
+                               help='Generate covert communication channels')
+    
     # Automated Pipeline (NEW) - One command to do everything!
     pipeline_group = parser.add_argument_group('Automated Pipeline (NEW - Do Everything!)')
     pipeline_group.add_argument('--auto-scan', '-auS', action='store_true',
