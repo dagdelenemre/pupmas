@@ -12,6 +12,12 @@ fi
 
 echo "[+] Updating PUPMAS..."
 cd "$INSTALL_DIR"
+
+# Clean up untracked files that might conflict with merge
+echo "[*] Cleaning up local config files..."
+git clean -fd config/mitre_attack*.json data/schemas/*.json 2>/dev/null || true
+
+# Pull latest changes
 git pull -q origin main
 
 if [ -d venv ]; then

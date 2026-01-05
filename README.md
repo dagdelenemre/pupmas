@@ -101,7 +101,7 @@ PUPMAS (Puppeteer Master) is a comprehensive cybersecurity operations and intell
 **Fastest way - just copy and paste:**
 
 ```bash
-# Install and run PUPMAS
+# Install and run PUPMAS in interactive mode
 curl -sSL https://raw.githubusercontent.com/dagdelenemre/pupmas/main/install.sh | bash && python3 pupmas.py --mode tui
 ```
 
@@ -113,6 +113,8 @@ curl -sSL https://raw.githubusercontent.com/dagdelenemre/pupmas/main/install.sh 
 curl -sSL https://raw.githubusercontent.com/dagdelenemre/pupmas/main/update.sh | bash && \
 python3 pupmas.py --mode tui
 ```
+
+**Note:** Use `--mode tui` (with double dashes) for interactive mode, not `-tui`
 
 ### Manual Install
 

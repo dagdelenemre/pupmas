@@ -38,8 +38,11 @@ data/reports/*
 data/*.db
 data/cve_cache.json
 data/timelines/*.json
+data/schemas/*.json
 *.sqlite
 *.sqlite3
+config/mitre_attack.json
+config/mitre_attack_*.json
 
 # Packages
 *.deb
