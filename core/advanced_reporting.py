@@ -149,6 +149,162 @@ class AdvancedReportingEngine:
         self.attack_paths = []
         self.threat_actors = {}
         self.threat_intelligence_feeds = []
+    
+    # ============ RISK ASSESSMENT ============
+    def perform_risk_assessment(self, target: str, findings: Dict) -> 'RiskAssessmentResult':
+        """Perform comprehensive risk assessment"""
+        
+        critical = findings.get('critical_vulns', 0)
+        high = findings.get('high_vulns', 0)
+        medium = findings.get('medium_vulns', 0)
+        low = findings.get('low_vulns', 0)
+        
+        # Calculate risk factors
+        vuln_score = (critical * 10) + (high * 7) + (medium * 4) + (low * 1)
+        exploitability = 8.0 if findings.get('has_exploit', False) else 5.0
+        public_exploit = 2.0 if findings.get('public_exploit', False) else 0.0
+        patch_available = -1.0 if findings.get('days_since_patch', 0) > 30 else 0.0
+        
+        # Overall risk score (0-10)
+        overall_risk = min(10.0, (vuln_score / 10) + exploitability + public_exploit + patch_available)
+        overall_risk = max(0.0, overall_risk)
+        
+        # Determine risk level
+        if overall_risk >= 9.0:
+            risk_level = "CRITICAL"
+        elif overall_risk >= 7.0:
+            risk_level = "HIGH"
+        elif overall_risk >= 4.0:
+            risk_level = "MEDIUM"
+        else:
+            risk_level = "LOW"
+        
+        # Risk factors breakdown
+        risk_factors = {
+            'vulnerability_severity': min(10.0, vuln_score / 5),
+            'exploitability': exploitability,
+            'public_exploit_available': public_exploit,
+            'patch_status': patch_available
+        }
+        
+        # Generate recommendations
+        recommendations = []
+        if critical > 0:
+            recommendations.append({
+                'priority': 'CRITICAL',
+                'action': f'Immediately patch {critical} critical vulnerabilities',
+                'timeline': 'Within 24 hours'
+            })
+        if high > 0:
+            recommendations.append({
+                'priority': 'HIGH',
+                'action': f'Patch {high} high-severity vulnerabilities',
+                'timeline': 'Within 7 days'
+            })
+        if findings.get('has_exploit'):
+            recommendations.append({
+                'priority': 'CRITICAL',
+                'action': 'Active exploit detected - implement IDS/IPS rules',
+                'timeline': 'Immediate'
+            })
+        if medium > 0:
+            recommendations.append({
+                'priority': 'MEDIUM',
+                'action': f'Address {medium} medium-severity issues',
+                'timeline': 'Within 30 days'
+            })
+        
+        # Create result object
+        result = type('RiskAssessmentResult', (), {
+            'target_name': target,
+            'overall_risk_score': overall_risk,
+            'risk_level': risk_level,
+            'critical_findings': critical,
+            'high_findings': high,
+            'medium_findings': medium,
+            'low_findings': low,
+            'risk_factors': risk_factors,
+            'recommendations': recommendations,
+            'timestamp': datetime.now().isoformat()
+        })()
+        
+        return result
+    
+    def calculate_cvss_v4(self, vulnerability_id: str, **metrics) -> CVSSv4Score:
+        """Calculate CVSS v4.0 score"""
+        
+        cvss = CVSSv4Score(
+            attack_vector=metrics.get('attack_vector', 'NETWORK').upper(),
+            attack_complexity=metrics.get('attack_complexity', 'LOW').upper(),
+            privileges_required=metrics.get('privileges_required', 'NONE').upper(),
+            user_interaction=metrics.get('user_interaction', 'NONE').upper(),
+            scope='UNCHANGED',
+            confidentiality=metrics.get('confidentiality_impact', 'HIGH').upper(),
+            integrity=metrics.get('integrity_impact', 'HIGH').upper(),
+            availability=metrics.get('availability_impact', 'HIGH').upper()
+        )
+        
+        # Calculate score
+        base_score = cvss.calculate_score()
+        
+        # Determine severity
+        if base_score >= 9.0:
+            severity = "CRITICAL"
+        elif base_score >= 7.0:
+            severity = "HIGH"
+        elif base_score >= 4.0:
+            severity = "MEDIUM"
+        elif base_score >= 0.1:
+            severity = "LOW"
+        else:
+            severity = "NONE"
+        
+        # Create result with additional fields
+        result = type('CVSSResult', (), {
+            'vulnerability_id': vulnerability_id,
+            'base_score': base_score,
+            'severity': severity,
+            'exploitability_score': base_score * 0.8,
+            'impact_score': base_score * 0.9,
+            'vector_string': f"CVSS:4.0/AV:{cvss.attack_vector[0]}/AC:{cvss.attack_complexity[0]}/PR:{cvss.privileges_required[0]}/UI:{cvss.user_interaction[0]}/C:{cvss.confidentiality[0]}/I:{cvss.integrity[0]}/A:{cvss.availability[0]}"
+        })()
+        
+        return result
+    
+    def generate_compliance_report(self, findings: List[Dict], framework: str = "OWASP") -> Dict:
+        """Generate compliance gap analysis report"""
+        
+        # Count gaps by severity
+        critical_gaps = sum(1 for f in findings if f.get('severity') == 'critical')
+        high_gaps = sum(1 for f in findings if f.get('severity') == 'high')
+        medium_gaps = sum(1 for f in findings if f.get('severity') == 'medium')
+        
+        total_gaps = len(findings)
+        
+        # Calculate compliance score (inverse of gaps)
+        compliance_score = max(0, 100 - (critical_gaps * 20 + high_gaps * 10 + medium_gaps * 5))
+        
+        # Generate gap details
+        gaps = []
+        for i, finding in enumerate(findings[:10], 1):
+            gaps.append({
+                'control_id': f"{framework}-{i:03d}",
+                'description': finding.get('category', 'Security Control'),
+                'severity': finding.get('severity', 'medium'),
+                'status': 'NON_COMPLIANT',
+                'remediation': f"Implement {finding.get('category', 'security')} controls"
+            })
+        
+        return {
+            'framework': framework,
+            'compliance_score': compliance_score,
+            'total_gaps': total_gaps,
+            'critical_gaps': critical_gaps,
+            'high_gaps': high_gaps,
+            'medium_gaps': medium_gaps,
+            'gaps': gaps,
+            'timestamp': datetime.now().isoformat()
+        }
         
     # ============ ADVANCED RISK SCORING ============
     def calculate_asset_risk(self,
