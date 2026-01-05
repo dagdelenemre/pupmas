@@ -143,6 +143,14 @@ class TimelineViewerWidget(Container):
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle timeline button press"""
         timeline_type = event.button.id.replace("timeline-", "")
+        # Map short names to full enum values
+        type_mapping = {
+            "attack": "attack",
+            "pentest": "pentest",
+            "recon": "reconnaissance",
+            "exfil": "exfiltration"
+        }
+        timeline_type = type_mapping.get(timeline_type, timeline_type)
         self.load_timeline(timeline_type)
     
     def load_timeline(self, timeline_type: str) -> None:
