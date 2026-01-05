@@ -75,6 +75,65 @@ class AdvancedIntelligenceEngine:
         self.digital_footprints = {}
         self.threat_intel_cache = {}
         self.domain_intel = {}
+    
+    # ============ ASYNC WRAPPER METHODS ============
+    async def gather_digital_footprint(self, target: Dict) -> DigitalFootprint:
+        """Async wrapper for digital footprint gathering"""
+        domain = target.get('domain', target.get('organization', 'unknown'))
+        return self.gather_domain_intelligence(domain)
+    
+    async def perform_dns_intelligence(self, domain: str) -> Dict:
+        """Async wrapper for DNS intelligence"""
+        footprint = self.gather_domain_intelligence(domain)
+        
+        return {
+            'a_records': [r.value for r in footprint.dns_records.get('A', [])],
+            'mx_records': [r.value for r in footprint.dns_records.get('MX', [])],
+            'ns_records': [r.value for r in footprint.dns_records.get('NS', [])],
+            'txt_records': [r.value for r in footprint.dns_records.get('TXT', [])],
+            'name_servers': footprint.dns_servers,
+            'subdomains': footprint.subdomains
+        }
+    
+    async def monitor_dark_web(self, target: Dict) -> Dict:
+        """Simulate dark web monitoring"""
+        domain = target.get('domain', 'unknown')
+        
+        return {
+            'mentions': [
+                {'source': 'darknet_forum', 'content': f'Discussion about {domain}', 'timestamp': datetime.now().isoformat()},
+                {'source': 'paste_site', 'content': f'Possible credentials leak', 'timestamp': datetime.now().isoformat()}
+            ],
+            'data_breaches': [
+                {'name': 'Sample Breach 2024', 'records': 1250, 'date': '2024-06-15'}
+            ],
+            'threat_assessment': {
+                'level': 'medium',
+                'score': 5.5,
+                'risk_factors': ['credential_exposure', 'infrastructure_enumeration']
+            }
+        }
+    
+    async def correlate_threat_intelligence(self, target: Dict) -> Dict:
+        """Correlate threat intelligence from multiple sources"""
+        domain = target.get('domain', 'unknown')
+        
+        return {
+            'active_threats': [
+                {
+                    'name': 'Phishing Campaign',
+                    'severity': 'high',
+                    'confidence': 0.75,
+                    'description': f'Active phishing targeting {domain} users'
+                }
+            ],
+            'iocs': [
+                {'type': 'domain', 'value': f'fake-{domain}', 'threat': 'phishing'},
+                {'type': 'ip', 'value': '192.0.2.1', 'threat': 'C2_server'}
+            ],
+            'threat_actors': ['APT-DEMO', 'Cybercrime-Group-X'],
+            'campaigns': ['Operation-Example']
+        }
         
     # ============ THREAT INTELLIGENCE INTEGRATION ============
     def query_threat_intelligence(self,
