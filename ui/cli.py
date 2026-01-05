@@ -791,7 +791,43 @@ Generated: {self.siem._generate_normal_logs.__globals__['datetime'].now().isofor
             'critical_vulns': 2,
             'high_vulns': 5,
             'medium_vulns': 12,
-            'low_vulns': 18
+            'low_vulns': 18,
+            'critical_details': [
+                {
+                    'id': 'C1',
+                    'cve': 'CVE-2023-4966',
+                    'vector': 'NET/RCE',
+                    'service': 'Citrix ADC Gateway',
+                    'evidence': 'Unauthenticated path traversal leads to session hijack',
+                    'patch': 'Apply vendor firmware/patch immediately'
+                },
+                {
+                    'id': 'C2',
+                    'cve': 'CVE-2024-23897',
+                    'vector': 'NET/RCE',
+                    'service': 'Jenkins CLI',
+                    'evidence': 'Command execution via args4j file-read over CLI',
+                    'patch': 'Upgrade Jenkins / disable CLI / apply mitigation'
+                }
+            ],
+            'high_details': [
+                {
+                    'id': 'H1',
+                    'cve': 'CVE-2024-6387',
+                    'vector': 'NET/RCE',
+                    'service': 'OpenSSH regreSSHion',
+                    'evidence': 'Async-signal unsafe handler reachable over network',
+                    'patch': 'Upgrade OpenSSH to fixed release'
+                },
+                {
+                    'id': 'H2',
+                    'cve': 'CVE-2023-34362',
+                    'vector': 'NET/RCE',
+                    'service': 'MOVEit Transfer',
+                    'evidence': 'SQLi to RCE chain (widely exploited)',
+                    'patch': 'Apply vendor cumulative patch'
+                }
+            ]
         }
         
         assessment = self.reporting.perform_risk_assessment(target, findings)
@@ -811,6 +847,31 @@ Generated: {self.siem._generate_normal_logs.__globals__['datetime'].now().isofor
             self.console.print(f"\n[bold cyan]Top Recommendations:[/bold cyan]")
             for rec in assessment.recommendations[:5]:
                 self.console.print(f"  • {rec['action']} (Priority: {rec['priority']})")
+
+        # Show critical/high detail rows
+        def _print_detail(title: str, rows):
+            if not rows:
+                return
+            detail_table = Table(title=title)
+            detail_table.add_column("ID", style="red", width=4)
+            detail_table.add_column("CVE", style="cyan", width=14)
+            detail_table.add_column("Vector", style="yellow", width=10)
+            detail_table.add_column("Service", style="white", width=20)
+            detail_table.add_column("Evidence", style="white", width=50)
+            detail_table.add_column("Patch/Mitigation", style="green", width=30)
+            for item in rows[:5]:
+                detail_table.add_row(
+                    item.get('id', ''),
+                    item.get('cve', ''),
+                    item.get('vector', ''),
+                    item.get('service', ''),
+                    item.get('evidence', '')[:50],
+                    item.get('patch', '')
+                )
+            self.console.print(detail_table)
+
+        _print_detail("Critical Findings (examples)", getattr(assessment, 'critical_details', []))
+        _print_detail("High Findings (examples)", getattr(assessment, 'high_details', []))
         print_success("Risk assessment complete")
 
     # ============================================
