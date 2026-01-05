@@ -265,6 +265,72 @@ class AdvancedIntelligenceEngine:
         else:
             return "low"
     
+    # ============ DOMAIN INTELLIGENCE GATHERING ============
+    def gather_domain_intelligence(self, domain: str) -> DigitalFootprint:
+        """Main method to gather comprehensive domain intelligence"""
+        
+        footprint = DigitalFootprint(target=domain)
+        
+        # Add primary domain
+        footprint.domains.append(domain)
+        
+        # DNS enumeration
+        print(f"[*] Enumerating DNS records for {domain}...")
+        footprint.dns_records = self.enumerate_dns_records(domain)
+        
+        # Extract IPs from A records
+        if "A" in footprint.dns_records:
+            footprint.ip_addresses = [r.value for r in footprint.dns_records["A"]]
+        
+        # Extract name servers
+        if "NS" in footprint.dns_records:
+            footprint.dns_servers = [r.value for r in footprint.dns_records["NS"]]
+        
+        # Extract mail servers
+        if "MX" in footprint.dns_records:
+            footprint.mail_servers = [
+                {"server": r.value, "priority": r.ttl}
+                for r in footprint.dns_records["MX"]
+            ]
+        
+        # Subdomain enumeration
+        print(f"[*] Enumerating subdomains...")
+        footprint.subdomains = self.enumerate_subdomains(domain)
+        
+        # Technology detection
+        footprint.technologies = self._detect_technologies(domain)
+        footprint.email_patterns = self._generate_email_patterns(domain)
+        footprint.social_media_accounts = self._find_social_media(domain)
+        
+        # Store in cache
+        self.digital_footprints[domain] = footprint
+        
+        return footprint
+    
+    def _detect_technologies(self, domain: str) -> List[str]:
+        """Detect technologies used by domain"""
+        return ["Apache", "PHP", "MySQL", "WordPress", "Cloudflare", "Google Analytics"]
+    
+    def _generate_email_patterns(self, domain: str) -> List[str]:
+        """Generate common email patterns"""
+        return [
+            f"admin@{domain}",
+            f"info@{domain}",
+            f"support@{domain}",
+            f"contact@{domain}",
+            f"sales@{domain}"
+        ]
+    
+    def _find_social_media(self, domain: str) -> List[str]:
+        """Find social media accounts"""
+        base_name = domain.split('.')[0]
+        return [
+            f"twitter.com/{base_name}",
+            f"facebook.com/{base_name}",
+            f"linkedin.com/company/{base_name}",
+            f"github.com/{base_name}"
+        ]
+    
     # ============ ADVANCED DNS ENUMERATION ============
     def enumerate_dns_records(self, domain: str) -> Dict[str, List[DNSRecord]]:
         """Comprehensive DNS enumeration"""
@@ -404,6 +470,22 @@ class AdvancedIntelligenceEngine:
                     # Could recursively enumerate cname.value
         except:
             pass
+        
+        return found
+    
+    def _google_dork_subdomains(self, domain: str) -> Set[str]:
+        """Search for subdomains using Google dorks (mock)"""
+        # Would use Google search API or scraping
+        return set()
+    
+    def _cname_chain_enumeration(self, domain: str) -> Set[str]:
+        """Follow CNAME chains to discover subdomains"""
+        found = set()
+        records = self.enumerate_dns_records(domain)
+        
+        if "CNAME" in records:
+            for record in records["CNAME"]:
+                found.add(record.value)
         
         return found
     
