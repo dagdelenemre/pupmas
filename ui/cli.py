@@ -142,9 +142,8 @@ class CLI:
                 self.handle_exploit_db()
             elif getattr(self.args, 'reverse_shell', None):
                 self.handle_reverse_shell()
-            
-                    else:
-                        self.console.print("[yellow]No command specified. Use --help for usage.[/yellow]")
+            else:
+                self.console.print("[yellow]No command specified. Use --help for usage.[/yellow]")
         
         except Exception as e:
             print_error(f"Error: {e}")
@@ -812,129 +811,137 @@ Generated: {self.siem._generate_normal_logs.__globals__['datetime'].now().isofor
             self.console.print(f"\n[bold cyan]Top Recommendations:[/bold cyan]")
             for rec in assessment.recommendations[:5]:
                 self.console.print(f"  • {rec['action']} (Priority: {rec['priority']})")
-            # ============================================
-            # Exploitation Features - Initial Access
-            # ============================================
-    
-            def handle_get_shell(self):
-                """Auto get shell access"""
-                target = getattr(self.args, 'get_shell')
-        
-                print_warning("🎯 AUTO SHELL ACQUISITION MODE")
-                print_warning("Attempting multiple exploitation methods...")
-                print_info(f"Target: {target}")
-        
-                result = self.exploit_engine.auto_get_shell(target)
-        
-                if result.success:
-                    print_success(f"✅ SHELL ACQUIRED!")
-                    print_success(f"   Method: {result.method}")
-                    print_success(f"   Type: {result.shell_type}")
-                    if result.credentials:
-                        print_success(f"   Credentials: {result.credentials}")
-                    print_info(f"\n💡 Connect with:")
-                    if result.shell_type == "ssh":
-                        print_info(f"   ssh {result.credentials.split(':')[0]}@{target}")
-                        print_info(f"   Password: {result.credentials.split(':')[1]}")
-                else:
-                    print_error(f"❌ Failed to get shell")
-                    print_error(f"   {result.error}")
-    
-            def handle_ssh_brute(self):
-                """SSH brute force"""
-                target = getattr(self.args, 'ssh_brute')
-                wordlist = getattr(self.args, 'ssh_wordlist', None)
-        
-                print_warning("🔓 SSH BRUTE FORCE ATTACK")
-                print_info(f"Target: {target}")
-                if wordlist:
-                    print_info(f"Wordlist: {wordlist}")
-        
-                result = self.exploit_engine.ssh_brute_force(target, wordlist)
-        
-                if result.success:
-                    print_success(f"✅ CREDENTIALS FOUND!")
-                    print_success(f"   {result.credentials}")
-                    print_info(f"\n💡 Connect with:")
-                    print_info(f"   ssh {result.credentials.split(':')[0]}@{result.target}")
-                else:
-                    print_error(f"❌ Brute force failed")
-    
-            def handle_web_exploit(self):
-                """Web exploitation"""
-                url = getattr(self.args, 'web_exploit')
-        
-                print_warning("🌐 WEB EXPLOITATION SCANNER")
-                print_info(f"Target: {url}")
-        
-                vulns = self.exploit_engine.web_exploit(url)
-        
-                total = sum(len(v) for v in vulns.values())
-        
-                if total > 0:
-                    table = Table(title="Web Vulnerabilities Found")
-                    table.add_column("Type", style="cyan")
-                    table.add_column("Count", style="yellow")
-                    table.add_column("Severity", style="red")
-            
-                    severity_map = {
-                        'rce': 'CRITICAL',
-                        'sqli': 'HIGH',
-                        'lfi': 'HIGH',
-                        'xss': 'MEDIUM',
-                        'path_traversal': 'MEDIUM'
-                    }
-            
-                    for vuln_type, payloads in vulns.items():
-                        if payloads:
-                            table.add_row(
-                                vuln_type.upper(),
-                                str(len(payloads)),
-                                severity_map.get(vuln_type, 'LOW')
-                            )
-            
-                    self.console.print(table)
-                    print_success(f"Found {total} vulnerabilities")
-                else:
-                    print_warning("No obvious vulnerabilities found")
-    
-            def handle_exploit_db(self):
-                """Search Exploit-DB"""
-                service = getattr(self.args, 'exploit_db')
-        
-                print_info(f"🔥 Searching Exploit-DB for: {service}")
-                print_info("Use: searchsploit {service}")
-                print_info("Or visit: https://www.exploit-db.com")
-    
-            def handle_reverse_shell(self):
-                """Generate reverse shell payloads"""
-                lhost_lport = getattr(self.args, 'reverse_shell')
-        
-                try:
-                    lhost, lport = lhost_lport.split(':')
-                    lport = int(lport)
-                except:
-                    print_error("Invalid format. Use: IP:PORT (e.g., 10.10.14.5:4444)")
-                    return
-        
-                print_info(f"🐚 Reverse Shell Payloads")
-                print_info(f"   Listener: {lhost}:{lport}")
-                print_info(f"\n💡 Start listener first:")
-                print_info(f"   nc -lvnp {lport}")
-        
-                payloads = self.exploit_engine.generate_reverse_shell(lhost, lport)
-        
-                table = Table(title="Reverse Shell Payloads")
-                table.add_column("Language", style="cyan", width=15)
-                table.add_column("Payload", style="white", width=80)
-        
-                for lang, payload in payloads.items():
-                    table.add_row(lang.upper(), payload[:80] + "..." if len(payload) > 80 else payload)
-        
-                self.console.print(table)
-                print_success("Copy and paste these on target system")
-        
         print_success("Risk assessment complete")
+
+    # ============================================
+    # Exploitation Features - Initial Access
+    # ============================================
+
+    def handle_get_shell(self):
+        """Auto get shell access"""
+        target = getattr(self.args, 'get_shell')
+
+        print_warning("🎯 AUTO SHELL ACQUISITION MODE")
+        print_warning("Attempting multiple exploitation methods...")
+        print_info(f"Target: {target}")
+
+        result = self.exploit_engine.auto_get_shell(target)
+
+        if result.success:
+            print_success("✅ SHELL ACQUIRED!")
+            print_success(f"   Method: {result.method}")
+            print_success(f"   Type: {result.shell_type}")
+            if result.credentials:
+                print_success(f"   Credentials: {result.credentials}")
+            if result.payload:
+                print_info(f"   Payload: {result.payload}")
+            print_info("\n💡 Connect with:")
+            if result.shell_type == "ssh" and result.credentials:
+                username, password = result.credentials.split(":", 1)
+                print_info(f"   ssh {username}@{target}")
+                print_info(f"   Password: {password}")
+        else:
+            print_error("❌ Failed to get shell")
+            if result.error:
+                print_error(f"   {result.error}")
+
+    def handle_ssh_brute(self):
+        """SSH brute force"""
+        target = getattr(self.args, 'ssh_brute')
+        wordlist = getattr(self.args, 'ssh_wordlist', None)
+
+        print_warning("🔓 SSH BRUTE FORCE ATTACK")
+        print_info(f"Target: {target}")
+        if wordlist:
+            print_info(f"Wordlist: {wordlist}")
+
+        result = self.exploit_engine.ssh_brute_force(target, wordlist)
+
+        if result.success:
+            print_success("✅ CREDENTIALS FOUND!")
+            print_success(f"   {result.credentials}")
+            print_info("\n💡 Connect with:")
+            username, _ = result.credentials.split(":", 1)
+            print_info(f"   ssh {username}@{result.target}")
+        else:
+            print_error("❌ Brute force failed")
+            if result.error:
+                print_error(f"   {result.error}")
+
+    def handle_web_exploit(self):
+        """Web exploitation"""
+        url = getattr(self.args, 'web_exploit')
+
+        print_warning("🌐 WEB EXPLOITATION SCANNER")
+        print_info(f"Target: {url}")
+
+        vulns = self.exploit_engine.web_exploit(url)
+
+        total = sum(len(v) for v in vulns.values())
+
+        if total > 0:
+            table = Table(title="Web Vulnerabilities Found")
+            table.add_column("Type", style="cyan")
+            table.add_column("Count", style="yellow")
+            table.add_column("Severity", style="red")
+
+            severity_map = {
+                'rce': 'CRITICAL',
+                'sqli': 'HIGH',
+                'lfi': 'HIGH',
+                'xss': 'MEDIUM',
+                'path_traversal': 'MEDIUM'
+            }
+
+            for vuln_type, payloads in vulns.items():
+                if payloads:
+                    table.add_row(
+                        vuln_type.upper(),
+                        str(len(payloads)),
+                        severity_map.get(vuln_type, 'LOW')
+                    )
+
+            self.console.print(table)
+            print_success(f"Found {total} vulnerabilities")
+        else:
+            print_warning("No obvious vulnerabilities found")
+
+    def handle_exploit_db(self):
+        """Search Exploit-DB"""
+        service = getattr(self.args, 'exploit_db')
+
+        print_info(f"🔥 Searching Exploit-DB for: {service}")
+        print_info("Use: searchsploit {service}")
+        print_info("Or visit: https://www.exploit-db.com")
+
+    def handle_reverse_shell(self):
+        """Generate reverse shell payloads"""
+        lhost_lport = getattr(self.args, 'reverse_shell')
+
+        try:
+            lhost, lport = lhost_lport.split(':')
+            lport = int(lport)
+        except Exception:
+            print_error("Invalid format. Use: IP:PORT (e.g., 10.10.14.5:4444)")
+            return
+
+        print_info("🐚 Reverse Shell Payloads")
+        print_info(f"   Listener: {lhost}:{lport}")
+        print_info("\n💡 Start listener first:")
+        print_info(f"   nc -lvnp {lport}")
+
+        payloads = self.exploit_engine.generate_reverse_shell(lhost, lport)
+
+        table = Table(title="Reverse Shell Payloads")
+        table.add_column("Language", style="cyan", width=15)
+        table.add_column("Payload", style="white", width=80)
+
+        for lang, payload in payloads.items():
+            truncated = payload[:80] + "..." if len(payload) > 80 else payload
+            table.add_row(lang.upper(), truncated)
+
+        self.console.print(table)
+        print_success("Copy and paste these on target system")
     
     def handle_cvss4(self):
         """Handle CVSS v4.0 scoring"""
