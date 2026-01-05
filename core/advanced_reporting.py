@@ -151,8 +151,15 @@ class AdvancedReportingEngine:
         self.threat_intelligence_feeds = []
     
     # ============ RISK ASSESSMENT ============
-    def perform_risk_assessment(self, target: str, findings: Dict) -> 'RiskAssessmentResult':
-        """Perform comprehensive risk assessment"""
+    def perform_risk_assessment(self, target: str, findings: Dict, fingerprints: Optional[List] = None) -> 'RiskAssessmentResult':
+        """Perform comprehensive risk assessment with real service fingerprinting"""
+        from core.service_fingerprinting import ServiceFingerprinter
+        
+        # If fingerprints not provided, scan now
+        if not fingerprints:
+            fingerprinter = ServiceFingerprinter()
+            host = target.split(':')[0] if ':' in target else target
+            fingerprints = fingerprinter.scan_host(host)
         
         critical = findings.get('critical_vulns', 0)
         high = findings.get('high_vulns', 0)
@@ -216,29 +223,61 @@ class AdvancedReportingEngine:
                 'timeline': 'Within 30 days'
             })
 
-        # Provide concise vulnerability detail lists (mock/supplied)
+        # Build real vulnerability details from fingerprints + CVE mapping
+        fingerprint_details = {}
+        if fingerprints:
+            for fp in fingerprints:
+                if fp.vulnerable_cves:
+                    for cve in fp.vulnerable_cves:
+                        fingerprint_details[cve] = {
+                            'id': cve,
+                            'cve': cve,
+                            'vector': 'NET/RCE',
+                            'service': f"{fp.product} {fp.version}",
+                            'host_port': f"{fp.host}:{fp.port}",
+                            'confidence': f"{fp.confidence:.0%}",
+                            'evidence': fp.evidence.get('banner') or fp.evidence.get('http_server_header', 'Service detected'),
+                            'patch': f'Update {fp.product} to patched version'
+                        }
+        
+        # Use fingerprint details if available, otherwise fallback
         if not critical_details:
             critical_details = [
-                {
-                    'id': 'C1',
-                    'cve': 'CVE-2023-4966',
-                    'vector': 'NET/RCE',
-                    'service': 'HTTP (Citrix ADC)',
-                    'evidence': 'Unauthenticated path traversal to session hijack',
-                    'patch': 'Apply vendor patch / upgrade firmware'
-                }
-            ] if critical else []
+                item for item in fingerprint_details.values()
+                if fingerprint_details
+            ][:2]
+            
+            if not critical_details and critical > 0:
+                critical_details = [
+                    {
+                        'id': 'C1',
+                        'cve': 'CVE-TBD',
+                        'vector': 'NET/RCE',
+                        'service': 'Service Detection Required',
+                        'confidence': 'LOW',
+                        'evidence': 'Service fingerprinting needed',
+                        'patch': 'Run service detection scan'
+                    }
+                ]
+        
         if not high_details:
             high_details = [
-                {
-                    'id': 'H1',
-                    'cve': 'CVE-2024-6387',
-                    'vector': 'NET/RCE',
-                    'service': 'OpenSSH 9.3p1',
-                    'evidence': 'Possible async-signal unsafe handler (regreSSHion)',
-                    'patch': 'Upgrade OpenSSH to 9.8p1 or later'
-                }
-            ] if high else []
+                item for item in fingerprint_details.values()
+                if fingerprint_details
+            ][2:5]
+            
+            if not high_details and high > 0:
+                high_details = [
+                    {
+                        'id': 'H1',
+                        'cve': 'CVE-TBD',
+                        'vector': 'NET',
+                        'service': 'Service Detection Required',
+                        'confidence': 'LOW',
+                        'evidence': 'Service fingerprinting needed',
+                        'patch': 'Run service detection'
+                    }
+                ]
         
         # Create result object
         result = type('RiskAssessmentResult', (), {
@@ -253,6 +292,8 @@ class AdvancedReportingEngine:
             'recommendations': recommendations,
             'critical_details': critical_details,
             'high_details': high_details,
+            'fingerprints': fingerprints or [],
+            'confidence_note': 'HIGH confidence: version detected via banner | MEDIUM: port inference + CVE match | LOW: needs verification',
             'timestamp': datetime.now().isoformat()
         })()
         

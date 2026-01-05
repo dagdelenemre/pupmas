@@ -780,58 +780,45 @@ Generated: {self.siem._generate_normal_logs.__globals__['datetime'].now().isofor
         print_success("Footprint analysis complete")
     
     def handle_risk_assessment(self):
-        """Handle risk assessment"""
+        """Handle risk assessment with real service fingerprinting"""
         target = self.args.risk_assessment
         
-        print_info(f"📈 Risk Assessment")
+        print_info(f"📈 Risk Assessment with Service Fingerprinting")
         print_info(f"Target: {target}")
+        print_info(f"Scanning for services...\n")
         
-        # Mock data for demonstration
+        # Mock findings (would come from real scanner)
         findings = {
-            'critical_vulns': 2,
-            'high_vulns': 5,
-            'medium_vulns': 12,
-            'low_vulns': 18,
-            'critical_details': [
-                {
-                    'id': 'C1',
-                    'cve': 'CVE-2023-4966',
-                    'vector': 'NET/RCE',
-                    'service': 'Citrix ADC Gateway',
-                    'evidence': 'Unauthenticated path traversal leads to session hijack',
-                    'patch': 'Apply vendor firmware/patch immediately'
-                },
-                {
-                    'id': 'C2',
-                    'cve': 'CVE-2024-23897',
-                    'vector': 'NET/RCE',
-                    'service': 'Jenkins CLI',
-                    'evidence': 'Command execution via args4j file-read over CLI',
-                    'patch': 'Upgrade Jenkins / disable CLI / apply mitigation'
-                }
-            ],
-            'high_details': [
-                {
-                    'id': 'H1',
-                    'cve': 'CVE-2024-6387',
-                    'vector': 'NET/RCE',
-                    'service': 'OpenSSH regreSSHion',
-                    'evidence': 'Async-signal unsafe handler reachable over network',
-                    'patch': 'Upgrade OpenSSH to fixed release'
-                },
-                {
-                    'id': 'H2',
-                    'cve': 'CVE-2023-34362',
-                    'vector': 'NET/RCE',
-                    'service': 'MOVEit Transfer',
-                    'evidence': 'SQLi to RCE chain (widely exploited)',
-                    'patch': 'Apply vendor cumulative patch'
-                }
-            ]
+            'critical_vulns': 0,
+            'high_vulns': 0,
+            'medium_vulns': 0,
+            'low_vulns': 0
         }
         
         assessment = self.reporting.perform_risk_assessment(target, findings)
         
+        # Show detected services first
+        if hasattr(assessment, 'fingerprints') and assessment.fingerprints:
+            fp_table = Table(title="Detected Services (Fingerprints)")
+            fp_table.add_column("Port", style="cyan", width=6)
+            fp_table.add_column("Service", style="yellow", width=20)
+            fp_table.add_column("Version", style="green", width=15)
+            fp_table.add_column("Confidence", style="white", width=12)
+            fp_table.add_column("CVEs", style="red", width=10)
+            
+            for fp in assessment.fingerprints:
+                fp_table.add_row(
+                    str(fp.port),
+                    fp.product or fp.service_name,
+                    fp.version or "Unknown",
+                    f"{fp.confidence:.0%}",
+                    str(len(fp.vulnerable_cves))
+                )
+            
+            self.console.print(fp_table)
+            print_info("")
+        
+        # Main risk assessment table
         table = Table(title="Risk Assessment Results")
         table.add_column("Metric", style="cyan")
         table.add_column("Value", style="white")
@@ -840,38 +827,48 @@ Generated: {self.siem._generate_normal_logs.__globals__['datetime'].now().isofor
         table.add_row("Overall Risk Score", f"{assessment.overall_risk_score:.1f}/10")
         table.add_row("Risk Level", assessment.risk_level)
         table.add_row("Critical Findings", str(assessment.critical_findings))
+        table.add_row("High Findings", str(assessment.high_findings))
         
         self.console.print(table)
         
         if assessment.recommendations:
-            self.console.print(f"\n[bold cyan]Top Recommendations:[/bold cyan]")
+            self.console.print(f"\n[bold cyan]Recommendations:[/bold cyan]")
             for rec in assessment.recommendations[:5]:
                 self.console.print(f"  • {rec['action']} (Priority: {rec['priority']})")
-
-        # Show critical/high detail rows
+        
+        # Show critical/high detail rows with confidence
         def _print_detail(title: str, rows):
             if not rows:
                 return
             detail_table = Table(title=title)
             detail_table.add_column("ID", style="red", width=4)
             detail_table.add_column("CVE", style="cyan", width=14)
-            detail_table.add_column("Vector", style="yellow", width=10)
-            detail_table.add_column("Service", style="white", width=20)
-            detail_table.add_column("Evidence", style="white", width=50)
-            detail_table.add_column("Patch/Mitigation", style="green", width=30)
+            detail_table.add_column("Service", style="yellow", width=20)
+            detail_table.add_column("Confidence", style="white", width=12)
+            detail_table.add_column("Evidence", style="white", width=40)
+            detail_table.add_column("Action", style="green", width=25)
+            
             for item in rows[:5]:
+                conf = item.get('confidence', 'UNKNOWN')
+                # Highlight LOW confidence with warning
+                conf_style = "red" if conf == "LOW" else "yellow" if conf == "MEDIUM" else "green"
                 detail_table.add_row(
                     item.get('id', ''),
                     item.get('cve', ''),
-                    item.get('vector', ''),
-                    item.get('service', ''),
-                    item.get('evidence', '')[:50],
+                    item.get('service', '')[:20],
+                    f"[{conf_style}]{conf}[/{conf_style}]",
+                    item.get('evidence', '')[:40],
                     item.get('patch', '')
                 )
             self.console.print(detail_table)
-
-        _print_detail("Critical Findings (examples)", getattr(assessment, 'critical_details', []))
-        _print_detail("High Findings (examples)", getattr(assessment, 'high_details', []))
+        
+        _print_detail("Critical Findings (Evidence-Based)", getattr(assessment, 'critical_details', []))
+        _print_detail("High Findings (Evidence-Based)", getattr(assessment, 'high_details', []))
+        
+        # Confidence note
+        if hasattr(assessment, 'confidence_note'):
+            self.console.print(f"\n[dim]{assessment.confidence_note}[/dim]")
+        
         print_success("Risk assessment complete")
 
     # ============================================
